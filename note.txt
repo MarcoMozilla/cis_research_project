@@ -1,0 +1,13 @@
+# note file
+
+Python 3.9.13
+
+# branch
+main      # the main branch
+develop   # for develop
+
+update process
+# commit push to develop
+# develop pull request to main
+# accept pull request in github
+
