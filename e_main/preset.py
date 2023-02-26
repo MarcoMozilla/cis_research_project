@@ -10,7 +10,7 @@ class Preset:
     # HOSTNAME use print(Preset.HOSTNAME) to check out
     if HOSTNAME == 'PC_Harry_1':
         # the absolute path to your 'research_project' directory
-        root = r'C:\Users\PC\Dropbox\_Research_Course\project\research_project'
+        root = r'C:\Users\PC\Dropbox\_Research_Course\project\cis_research_project'
 
     # please filling here
     elif HOSTNAME == '':
