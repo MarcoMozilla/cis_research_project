@@ -11,3 +11,10 @@ update process
 # develop pull request to main
 # accept pull request in github
 
+
+google doc
+https://docs.google.com/document/d/19bqHgvQBtjdL8yQKcitWqaEBDJkFde8eDusb8MnQ6p8/edit#
+
+google slide
+https://docs.google.com/presentation/u/2/
+

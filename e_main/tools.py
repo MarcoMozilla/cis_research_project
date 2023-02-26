@@ -8,7 +8,7 @@ from e_main import const
 from e_main.preset import Preset
 
 
-def write_jsonx(data, fpath, mode='w'):
+def save_jsonx(data, fpath, mode='w'):
     suffix = pathlib.Path(fpath).suffix
 
     if suffix == '.jsonl':
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     fpath_jsonl = os.path.join(Preset.root, 'sample', 'test.jsonl')
     fpath_json = os.path.join(Preset.root, 'sample', 'test.json')
     data = [{'a': 1, 'b': 2}, {'c': 3, 'd': 4}]
-    write_jsonx(data, fpath_jsonl)
-    write_jsonx(data, fpath_json)
+    save_jsonx(data, fpath_jsonl)
+    save_jsonx(data, fpath_json)
     data_jsonl = read_jsonx(fpath_jsonl)
     data_json = read_jsonx(fpath_json)
