@@ -28,6 +28,9 @@ def load_imdb_dataset(dataset=None):
         print(f'{fname} : #{len(dctns)}')
 
 
+# TODO other dataset loading function
+
+
 if __name__ == '__main__':
     pass
     load_imdb_dataset()
