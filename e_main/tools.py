@@ -1,6 +1,8 @@
 import json
 import os
 import pathlib
+import pandas as pd
+from datetime import timedelta, datetime
 
 from e_main import const
 from e_main.preset import Preset
@@ -35,9 +37,59 @@ def read_jsonx(fpath):
         return data
 
 
+class Watch:
+    def __init__(self, fctn=pd.Timestamp.now):
+        self.fctn = fctn
+        self.tick = self.fctn()
+        self.records = []
+
+    def see(self):
+        tick = self.fctn()
+        res = tick - self.tick
+        self.records.append(res)
+        self.tick = tick
+        return res
+
+    @staticmethod
+    def pdtd2HMS(pdtd):
+        ts = pdtd.total_seconds()
+        hrs, ts = divmod(ts, 3600)
+        mins, ts = divmod(ts, 60)
+        secs = round(ts)
+
+        hrs, mins, secs = [str(int(n)).zfill(2) for n in [hrs, mins, secs]]
+        tds = f'{hrs}:{mins}:{secs}'
+        return tds
+
+    def seeSec(self):
+        return round(self.see().total_seconds(), 6)
+
+    def total(self):
+        totalTime = sum(self.records, timedelta())
+        return totalTime
+
+    @staticmethod
+    def now():
+        t = datetime.now()
+        rt = datetime(t.year, t.month, t.day, t.hour, t.minute, t.second)
+        return pd.Timestamp(rt)
+
+
+def watch_time(func):
+    def wrap(*args, **kwargs):
+        w = Watch()
+        res = func(*args, **kwargs)
+
+        print(f"Time Cost : {func.__name__} {w.see()}")
+        return res
+
+    return wrap
+
+
 if __name__ == '__main__':
     pass
 
+    # sample of read/write json/jsonl
     fpath_jsonl = os.path.join(Preset.root, 'sample', 'test.jsonl')
     fpath_json = os.path.join(Preset.root, 'sample', 'test.json')
     data = [{'a': 1, 'b': 2}, {'c': 3, 'd': 4}]
