@@ -16,6 +16,7 @@ def save_jsonx(data, fpath, mode='w'):
             for item in data:
                 json_item = json.dumps(item, ensure_ascii=False)
                 file.write(json_item + '\n')
+                file.flush()
     elif suffix == '.json':
         with open(fpath, mode, encoding=const.ecd_utf8) as file:
             json.dump(data, file, ensure_ascii=False, indent=1)
