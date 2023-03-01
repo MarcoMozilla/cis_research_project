@@ -8,6 +8,7 @@ from e_main.tools import save_jsonx
 
 # add preprocess script from b_data to c_buffer
 
+path_b_data = os.path.join(Preset.root, r'b_data')
 
 def load_dataset_imdb(dataset):
     body_name = 'imdb'
@@ -23,7 +24,7 @@ def load_dataset_imdb(dataset):
 
         B = len(dctns)
         C = len({dctn['label'] for dctn in dctns})
-        fname = os.path.join(Preset.root, r'b_data', f'{body_name}.{tp}.{B}x{C}.jsonl')
+        fname = os.path.join(path_b_data, f'{body_name}.{tp}.{B}x{C}.jsonl')
 
         save_jsonx(dctns, fname)
         print(f'{fname} : #{len(dctns)}')
@@ -43,7 +44,7 @@ def load_dataset_agnews(dataset):
 
         B = len(dctns)
         C = len({dctn['label'] for dctn in dctns})
-        fname = os.path.join(Preset.root, r'b_data', f'{body_name}.{tp}.{B}x{C}.jsonl')
+        fname = os.path.join(path_b_data, f'{body_name}.{tp}.{B}x{C}.jsonl')
 
         save_jsonx(dctns, fname)
         print(f'{fname} : #{len(dctns)}')
@@ -64,7 +65,7 @@ def load_dataset_dbpedia(dataset):
 
         B = len(dctns)
         C = len({dctn['label'] for dctn in dctns})
-        fname = os.path.join(Preset.root, r'b_data', f'{body_name}.{tp}.{B}x{C}.jsonl')
+        fname = os.path.join(path_b_data, f'{body_name}.{tp}.{B}x{C}.jsonl')
 
         save_jsonx(dctns, fname)
         print(f'{fname} : #{len(dctns)}')
@@ -84,7 +85,7 @@ def load_dataset_emotion(dataset):
 
         B = len(dctns)
         C = len({dctn['label'] for dctn in dctns})
-        fname = os.path.join(Preset.root, r'b_data', f'{body_name}.{tp}.{B}x{C}.jsonl')
+        fname = os.path.join(path_b_data, f'{body_name}.{tp}.{B}x{C}.jsonl')
 
         save_jsonx(dctns, fname)
         print(f'{fname} : #{len(dctns)}')
@@ -103,7 +104,7 @@ def load_dataset_yelp(dataset):
 
         B = len(dctns)
         C = len({dctn['label'] for dctn in dctns})
-        fname = os.path.join(Preset.root, r'b_data', f'{body_name}.{tp}.{B}x{C}.jsonl')
+        fname = os.path.join(path_b_data, f'{body_name}.{tp}.{B}x{C}.jsonl')
 
         save_jsonx(dctns, fname)
         print(f'{fname} : #{len(dctns)}')
@@ -122,7 +123,7 @@ def load_dataset_amazonpolar(dataset):
 
         B = len(dctns)
         C = len({dctn['label'] for dctn in dctns})
-        fname = os.path.join(Preset.root, r'b_data', f'{body_name}.{tp}.{B}x{C}.jsonl')
+        fname = os.path.join(path_b_data, f'{body_name}.{tp}.{B}x{C}.jsonl')
 
         save_jsonx(dctns, fname)
         print(f'{fname} : #{len(dctns)}')
