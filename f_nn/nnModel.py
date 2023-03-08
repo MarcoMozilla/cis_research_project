@@ -24,45 +24,64 @@ import matplotlib.pyplot as plt
 get_tout = lambda tin, k, s, p: (tin + 2 * p + 1 - k) // s
 
 
-class ResNet(nn.Module):
+class ResNetSimple(nn.Module):
 
-    def __init__(self, features, clusters):
-        super(ResNet, self).__init__()
+    def __init__(self, features, clusters, hidden_size=32, layers=3):
+        super(ResNetSimple, self).__init__()
 
         self.F = features
 
-        self.H = clusters
-        self.active = nn.ReLU()
+        self.H = hidden_size
+        self.K = clusters
+        self.L = layers
+        self.ln_in_hid = nn.Linear(self.F, self.H)
+        self.yn_in_hid_b = nn.BatchNorm1d(self.F)
+        # self.yn_in_hid_b = nn.BatchNorm1d(self.H)
 
-        self.ln1 = nn.Linear(self.F, self.H)
+        # self.ln_in_out = nn.Linear(self.F, self.K)
+        # self.yn_in_out_a = nn.BatchNorm1d(self.F)
+        # self.yn_in_out_b = nn.BatchNorm1d(self.K)
 
-        self.ln2 = nn.Linear(self.H, self.H)
-        self.ln3 = nn.Linear(self.H, self.H)
+        # self.af_in_hid = nn.PReLU()
+        # self.af_in_out = nn.PReLU()
 
-        self.ln4 = nn.Linear(self.H, self.H)
-        self.ln5 = nn.Linear(self.H, self.H)
+        self.lns = nn.ModuleList()
 
-        self.yn1 = nn.BatchNorm1d(self.H)
-        self.yn2 = nn.BatchNorm1d(self.H)
-        self.yn3 = nn.BatchNorm1d(self.H)
-        self.yn4 = nn.BatchNorm1d(self.H)
-        self.yn5 = nn.BatchNorm1d(self.H)
+        self.yns_b = nn.ModuleList()
+        self.afs = nn.ModuleList()
 
-        self.ln_out = nn.Linear(self.H, self.H)
+        for i in range(self.L):
+            self.lns.append(nn.Linear(self.H, self.H))
+            # self.yns_a.append(nn.BatchNorm1d(self.H))
+            self.yns_b.append(nn.BatchNorm1d(self.H))
+            self.afs.append(nn.PReLU())
 
-        self.factive = nn.Softmax(dim = 1)
+        self.yn_out_b = nn.BatchNorm1d(self.H)
+        self.ln_out = nn.Linear(self.H, self.K)
+
+        # self.yn_out_a = nn.BatchNorm1d(self.H)
+        # self.af_hid = nn.PReLU()
+
+        self.af_out = nn.Softmax(dim=1)
 
     def forward(self, x_BxF: torch.Tensor):
         B, F = x_BxF.shape
+        z_in_hid_BxH = (self.ln_in_hid(self.yn_in_hid_b(x_BxF)))
+        # z_in_out_BxK = (self.yn_in_out_b(self.ln_in_out(self.yn_in_out_a(x_BxF))))
 
-        z12_BxH = self.active(self.yn1(self.ln1(x_BxF)))
-        z23_BxH = z12_BxH + self.active(self.yn2(self.ln2(z12_BxH)))
-        z34_BxH = z23_BxH + self.active(self.yn3(self.ln3(z23_BxH)))
+        for i in range(self.L):
+            ln_hidden = self.lns[i]
+            # yn_hidden_a = self.yns_a[i]
+            yn_hidden_b = self.yns_b[i]
+            af_hidden = self.afs[i]
 
-        z45_BxH = z34_BxH + self.active(self.yn4(self.ln4(z34_BxH)))
-        z56_BxH = z45_BxH + self.active(self.yn5(self.ln5(z45_BxH)))
+            z_in_hid_BxH = (z_in_hid_BxH + af_hidden(ln_hidden(yn_hidden_b(z_in_hid_BxH))))
 
-        return self.factive(self.ln_out(z56_BxH))
+        # z_hid_out_BxK = (self.yn_out_b(self.ln_out(self.yn_out_a(z_in_hid_BxH))))
+        z_hid_out_BxK = (self.ln_out(self.yn_out_b(z_in_hid_BxH)))
+
+        zout_BxK = self.af_out(z_hid_out_BxK)
+        return zout_BxK
 
 
 if __name__ == '__main__':
@@ -72,7 +91,7 @@ if __name__ == '__main__':
     N_feature = 128
     N_cluster = 32
 
-    resnet = ResNet(features=N_feature, clusters=N_cluster)
+    resnet = ResNetSimple(features=N_feature, clusters=N_cluster)
     show_model_info(resnet)
 
     x = torch.randn(N_batch, N_feature)
