@@ -1,9 +1,13 @@
 import random
 import socket
 import string
+
+
 def get_hostname():
     hostname = socket.gethostname()
     return hostname
+
+
 class Preset:
     HOSTNAME = get_hostname()
 
@@ -12,12 +16,14 @@ class Preset:
         # the absolute path to your 'research_project' directory
         root = r'C:\Users\PC\Dropbox\_Research_Course\project\cis_research_project'
 
+        path_buffer = r''
+        path_data = r''
+
+
     # please filling here
     elif HOSTNAME == '':
         pass
         root = ''
-
-
 
 
 if __name__ == '__main__':
