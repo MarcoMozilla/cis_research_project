@@ -28,11 +28,13 @@ for ptrain, ptest in ptrain_ptest:
     X_test = dm.get_X_test()
     y_test = dm.get_y_test()
     rids_RandomSample = dm.get_rids_random_sample()
+    rids_SampleAF = dm.get_rids_sample('reorder_method_AF')
+    rids_SampleBF = dm.get_rids_sample('reorder_method_BF')
 
     N_labels = dm.N_labels
 
     N_hidden = int(N_labels * 2)
-    N_layers = int(N_labels * 2)
+    N_layers = int(3)
     nn_model = ResNetSimple(features=N_features, clusters=N_labels, hidden_size=N_hidden, layers=N_layers)
 
     print(f'dataset_name={dataset_name}')
@@ -45,26 +47,32 @@ for ptrain, ptest in ptrain_ptest:
         100000, 200000, 300000, 500000,
         1000000, 2000000, 3000000, 5000000
     ]
-    
-    for pcent in pcents:
 
-        if pcent <= len(rids_RandomSample):
-            print(f'pcent={pcent}')
+    spname2spidxs = {  # 'RandomSample': rids_RandomSample,
+        'SampleAF': rids_SampleAF,
+        'SampleBF': rids_SampleBF
+    }
 
-            rids_RandomSample_sub = rids_RandomSample[:pcent]
+    for spname, sp_ridxs in spname2spidxs.items():
+        for pcent in pcents:
 
-            fname_model = f'{dataset_name}_ResNetSimple_F{N_features}_K{N_labels}_H{N_hidden}_L{N_layers}_randomsample_{pcent}.pt'
+            if pcent <= len(sp_ridxs):
+                print(f'pcent={pcent}')
 
-            if not os.path.exists(fname_model):
-                mm_pcent_sub = ModelManager(model=nn_model,
-                                            fname_model=fname_model,
-                                            X_train=X_train[rids_RandomSample_sub, :],
-                                            y_train=y_train[rids_RandomSample_sub],
-                                            X_test=X_test,
-                                            y_test=y_test
-                                            )
+                rids_RandomSample_sub = sp_ridxs[:pcent]
 
-                mm_pcent_sub.train_with_minibatch(lr=1e-2, epoch_show_every=50)
+                fname_model = f'{dataset_name}_ResNetSimple_F{N_features}_K{N_labels}_H{N_hidden}_L{N_layers}_{spname}_{pcent}.pt'
+
+                if not os.path.exists(fname_model):
+                    mm_pcent_sub = ModelManager(model=nn_model,
+                                                fname_model=fname_model,
+                                                X_train=X_train[rids_RandomSample_sub, :],
+                                                y_train=y_train[rids_RandomSample_sub],
+                                                X_test=X_test,
+                                                y_test=y_test
+                                                )
+
+                    mm_pcent_sub.train_with_minibatch(lr=1e-2, epoch_show_every=10)
 
 if __name__ == '__main__':
     pass

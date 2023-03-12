@@ -64,17 +64,20 @@ rdf.to_csv(fpath, index=False, encoding=const.ecd_utf8sig)
 
 cols = [col_f1, col_accuracy, col_precision, col_recall][:1]
 
-if len(cols) == 1:
-    axs = [plt]
-else:
-    fig, axs = plt.subplots(len(cols), 1, figsize=(13, 24))
+dataset_names = ['agnews', 'amazonpolar', 'dbpedia', 'emotion', 'imdb', 'yelp']
+# dataset_names = ['emotion', 'yelp']
 
-for aidx, col in enumerate(cols):
+fig, axs = plt.subplots(len(dataset_names), 1, figsize=(13, 24), sharex='all')
 
-    for nn in nns:
-        colors = plt.get_cmap('brg')(np.linspace(0, 1, len(dataset_names) + 2))[1:-1]
-        for dataset_id, dataset_name in enumerate(sorted(list(dataset_names))):
-            for algo_name in algo_names:
+markers = ['.', '^', 'v']
+algo_names = ['randomsample', 'SampleAF', 'SampleBF']
+
+for aidx, col in enumerate(cols[:1]):
+
+    for dataset_id, dataset_name in enumerate(dataset_names):
+        for nn in nns:
+            # colors = plt.get_cmap('brg')(np.linspace(0, 1, len(dataset_names) + 2))[1:-1]
+            for algo_name, marker in zip(algo_names, markers):
                 for tp in ['train', 'test']:
                     label = f'{dataset_name}-{nn}-{algo_name}-{tp}'
 
@@ -83,17 +86,17 @@ for aidx, col in enumerate(cols):
                         values = sub_rdf['value'].tolist()
                         pcents = sub_rdf['pcent'].tolist()
 
-                        color = colors[dataset_id]
+                        # color = colors[dataset_id]
 
                         if tp == 'train':
-                            axs[aidx].plot(pcents, values, alpha=1, marker='.', color=color, label=label)
+                            axs[dataset_id].plot(pcents, values, alpha=1, marker=marker, label=label)
 
                         elif tp == 'test':
                             # color = plt.gca().lines[-1].get_color()
-                            axs[aidx].plot(pcents, values, alpha=1, marker='.', color=color, linestyle='dotted', label=label)
+                            axs[dataset_id].plot(pcents, values, alpha=1, marker=marker, linestyle='dotted', label=label)
 
-    axs[aidx].legend()
-    axs[aidx].xscale('log')
+        axs[dataset_id].legend()
+        axs[dataset_id].set_xscale('log')
 
 plt.show(block=True)
 
