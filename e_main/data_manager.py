@@ -22,22 +22,19 @@ plt.style.use('Solarize_Light2')
 path_data = os.path.join(Preset.root, r'b_data')
 path_buffer = os.path.join(Preset.root, r'c_buffer')
 
-
-
-
-
+path_idxs = os.path.join(Preset.root, 'c_idxs')
 
 
 class DataManager:
 
     def __init__(self, path_data_jsonl_train, path_data_jsonl_test):
-        path_buffer_npy_train = path_data_jsonl_train.replace('.jsonl', '.X.npy')
-        path_buffer_npy_test = path_data_jsonl_test.replace('.jsonl', '.X.npy')
+        self.path_buffer_npy_train = path_data_jsonl_train.replace('.jsonl', '.X.npy')
+        self.path_buffer_npy_test = path_data_jsonl_test.replace('.jsonl', '.X.npy')
 
         self.fpath_data_jsonl_train = os.path.join(path_data, path_data_jsonl_train)
         self.fpath_data_jsonl_test = os.path.join(path_data, path_data_jsonl_test)
-        self.fpath_buffer_npy_train = os.path.join(path_buffer, path_buffer_npy_train)
-        self.fpath_buffer_npy_test = os.path.join(path_buffer, path_buffer_npy_test)
+        self.fpath_buffer_npy_train = os.path.join(path_buffer, self.path_buffer_npy_train)
+        self.fpath_buffer_npy_test = os.path.join(path_buffer, self.path_buffer_npy_test)
 
         for fname in [self.fpath_data_jsonl_train, self.fpath_data_jsonl_test, self.fpath_buffer_npy_train, self.fpath_buffer_npy_test]:
             if os.path.exists(fname):
@@ -120,8 +117,21 @@ class DataManager:
         rids_random_sample = random.sample(self.rids_data_train, len(self.rids_data_train))
         return np.array(rids_random_sample)
 
+    def get_rids_sample(self, reorder_method_name):
+        """
+
+        :param reorder_method_name:
+        reorder_method_AF
+        reorder_method_BF
+        :return:
+        """
+        fname = f"{reorder_method_name}.{self.path_buffer_npy_train.replace('.X.npy', '.idxs.npy')}"
+        fpath = os.path.join(path_idxs, fname)
+        idxs = np.load(fpath)
+        return idxs
+
 
 if __name__ == '__main__':
     pass
 
-dm = DataManager(path_data_jsonl_train=r'emotion.train.16000x6.jsonl', path_data_jsonl_test=r'emotion.test.2000x6.jsonl')
+    dm = DataManager(path_data_jsonl_train=r'emotion.train.16000x6.jsonl', path_data_jsonl_test=r'emotion.test.2000x6.jsonl')
