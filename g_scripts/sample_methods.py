@@ -1,3 +1,4 @@
+import math
 import traceback
 from queue import Queue
 
@@ -11,7 +12,7 @@ import random
 
 import numpy as np
 from tqdm import tqdm
-
+from bisect import bisect_left
 from e_main.data_manager import DataManager
 from e_main.preset import Preset
 
@@ -19,7 +20,7 @@ from e_main.preset import Preset
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from pprint import pprint as p
-
+import scipy
 from e_main.tools import Watch
 
 mpl.rcParams['font.sans-serif'] = ['SimHei']
@@ -36,7 +37,10 @@ def get_method_A_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
         mean_idx = idxs[0]
         return [mean_idx], N, {}
     else:
-        mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+
+        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
+
         # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
         mean_local_idx = np.argmax(np.sum((data_BxF[idxs, :] * mean_data_F), axis=1))
 
@@ -60,8 +64,9 @@ def get_method_B_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
     if len(idxs) <= 2:
         return idxs, N, {}
     else:
-        mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
         # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
 
         similarity_B = np.sum((data_BxF[idxs, :] * mean_data_F), axis=1)
         mean_local_idx_max = np.argmax(similarity_B)
@@ -95,8 +100,9 @@ def get_method_C_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
     if len(idxs) <= 2:
         return idxs, N, {}
     else:
-        mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
         # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
 
         similarity_B = np.sum((data_BxF[idxs, :] * mean_data_F), axis=1)
         mean_local_idx_max = np.argmax(similarity_B)
@@ -130,8 +136,9 @@ def get_method_D_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
     if len(idxs) <= 2:
         return idxs, N, {}
     else:
-        mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
         # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
 
         similarity_B = np.sum((data_BxF[idxs, :] * mean_data_F), axis=1)
         mean_local_idx_max = np.argmax(similarity_B)
@@ -156,41 +163,6 @@ def get_method_D_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
                 ck2idxs[ck].append(idxs[i])
 
         return [idxs[i] for i in mean_idxs], N, ck2idxs
-
-
-def get_method_E_MBTree_idxs_N_ck2idxs(data_BxF):
-    B, F = data_BxF.shape
-
-    max_pos_B = np.argmax(np.abs(data_BxF), axis=1)
-    max_pos_sign_B = np.sign(data_BxF[np.arange(B), max_pos_B])
-
-    cks = ((max_pos_sign_B + 1) // 2 + 2 * max_pos_B).astype(int)
-
-    ck2idxs = {}
-    pick_idxs = []
-    for idx, ck in enumerate(cks):
-        if not ck in ck2idxs:
-            ck2idxs[ck] = []
-        ck2idxs[ck].append(idx)
-
-    ck2vct_F = {}
-    for ck in ck2idxs:
-        vct_F = np.zeros(F)
-        sign = int((ck % 2 * 2) - 1)
-        pos = ck // 2
-        vct_F[pos] = sign
-        ck2vct_F[ck] = vct_F
-
-    p(ck2vct_F)
-
-    for ck, idxs in ck2idxs.items():
-        similarity_B = np.sum((data_BxF[idxs, :] * ck2vct_F[ck]), axis=1)
-        local_pick_idx = np.argmax(similarity_B)
-        pick_idx = idxs[local_pick_idx]
-        pick_idxs.append(pick_idx)
-        new_idxs = idxs[:local_pick_idx] + idxs[local_pick_idx + 1:]
-        ck2idxs[ck] = new_idxs
-        print(f"{ck}:{pick_idx},{new_idxs}")
 
 
 def get_MBTree(data_BxF, get_method_MBTree_idxs_N_ck2idxs, idxs=None, d=0):
@@ -233,7 +205,8 @@ def reorder_by_MBTree(data_BxF, get_method_MBTree_idxs_N_ck2idxs, idxs=None, sub
     # p(level2idxs)
 
     new_idxs = []
-    for level, idxs in level2idxs.items():
+    for level in sorted(list(level2idxs.keys())):
+        idxs = level2idxs[level]
         if len(idxs) <= limit:
             random.shuffle(idxs)
             new_idxs.extend(idxs)
@@ -281,12 +254,12 @@ def reorder_method_CF(data_BxF):
     return reorder_by_MBTree(data_BxF, get_method_C_MBTree_idxs_N_ck2idxs, idxs=None, sub_reorder=False)
 
 
-# def reorder_method_DT(data_BxF):
-#     return reorder_by_MBTree(data_BxF, get_method_D_MBTree_idxs_N_ck2idxs, idxs=None, sub_reorder=False)
-#
-#
-# def reorder_method_DF(data_BxF):
-#     return reorder_by_MBTree(data_BxF, get_method_D_MBTree_idxs_N_ck2idxs, idxs=None, sub_reorder=False)
+def reorder_method_DT(data_BxF):
+    return reorder_by_MBTree(data_BxF, get_method_D_MBTree_idxs_N_ck2idxs, idxs=None, sub_reorder=False)
+
+
+def reorder_method_DF(data_BxF):
+    return reorder_by_MBTree(data_BxF, get_method_D_MBTree_idxs_N_ck2idxs, idxs=None, sub_reorder=False)
 
 
 def reorder_method_rand(data_BxF):
@@ -296,15 +269,98 @@ def reorder_method_rand(data_BxF):
     return ridxs
 
 
+def find_nearest(array, value):
+    idx = np.searchsorted(array, value, side="left")
+
+    if idx > 0 and (idx == len(array) or math.fabs(value - array[idx - 1]) < math.fabs(value - array[idx])):
+        return idx - 1
+    else:
+        return np.max(idx, 0)
+
+
+def make_binary_tree(idxs, vals, level=0, left_val=None, right_val=None):
+    if len(idxs) == 0:
+        return None
+    elif len(idxs) == 1:
+        return {'idx': idxs[0], 'left': None, 'right': None, 'lv': level}
+
+    if left_val is None:
+        left_val = vals[0]
+    if right_val is None:
+        right_val = vals[-1]
+    mid_val = (left_val + right_val) / 2
+
+    local_idx = find_nearest(vals, mid_val)
+
+    global_idx = idxs[local_idx]
+
+    left_idxs = idxs[:local_idx]
+    right_idxs = idxs[local_idx + 1:]
+
+    left_tree = make_binary_tree(left_idxs, vals[:local_idx], level=level + 1, left_val=left_val, right_val=mid_val)
+    right_tree = make_binary_tree(right_idxs, vals[local_idx + 1:], level=level + 1, left_val=mid_val, right_val=right_val)
+
+    return {'idx': global_idx, 'left': left_tree, 'right': right_tree, 'lv': level}
+
+
+def reorder_method_quick_explore(data_BxF: np.ndarray):
+    data_BxK = scipy.linalg.orth(data_BxF)
+
+    v_B = np.sum(data_BxK ** 3, axis=1)
+
+    idxs = np.argsort(v_B)
+    v_B = v_B[idxs]
+
+    tree = make_binary_tree(idxs, v_B)
+    # p(tree)
+    level2idxs = {}
+    q = Queue()
+    q.put(tree)
+    while not q.empty():
+        t = q.get()
+        level = t['lv']
+
+        idx = t['idx']
+        if not level in level2idxs:
+            level2idxs[level] = []
+        level2idxs[level].append(idx)
+
+        left_tree = t['left']
+        right_tree = t['right']
+        for sub_tree in [left_tree, right_tree]:
+            if sub_tree:
+                q.put(sub_tree)
+
+    # p(level2idxs)
+
+    new_idxs = []
+    for level in sorted(list(level2idxs.keys())):
+        idxs = level2idxs[level]
+        random.shuffle(idxs)
+        new_idxs.extend(idxs)
+
+    if not len(new_idxs) == len(idxs):
+        hold = set()
+        new_idxs_buffer = []
+        for nidx in new_idxs:
+            if not nidx in hold:
+                hold.add(nidx)
+                new_idxs_buffer.append(nidx)
+        new_idxs = new_idxs_buffer
+    return new_idxs
+
+
 methods = [reorder_method_rand,
+           # reorder_method_quick_explore,
            # reorder_method_AT,
            reorder_method_AF,
            # reorder_method_BT,
-           reorder_method_BF
+           # reorder_method_BF,
            # reorder_method_CT,
-           # reorder_method_CF
+           # reorder_method_CF,
            # reorder_method_DT,
            # reorder_method_DF
+
            ]
 
 if __name__ == '__main__':
@@ -313,15 +369,45 @@ if __name__ == '__main__':
     np.random.seed(24)
     #
     # data_B = np.random.rand(5000) * 2 * np.pi
-    data_B = np.clip(np.random.normal(0, np.pi / 2, 100), -np.pi, np.pi)
+    # ax = plt.axes(projection="3d")
+
+    ays = np.array([1.1, 2.2, 3.3])
+    data_B = np.clip(np.random.normal(0, np.pi / 4, 5000), -np.pi, np.pi)
 
     data_B1 = np.cos(data_B)
     data_B2 = np.sin(data_B)
-
     data_BxF = np.stack([data_B1, data_B2], axis=1)
 
-    get_method_E_MBTree_idxs_N_ck2idxs(data_BxF)
+    # for d in [2, 4, 6, 8]:
+    #     data_B = np.clip(np.random.normal(0, np.pi / d, 100), -np.pi, np.pi)
+    #
+    #     data_B1 = np.cos(data_B)
+    #     data_B2 = np.sin(data_B)
+    #
+    #     data_BxF = np.stack([data_B1, data_B2], axis=1)
+    #
+    #     # get_method_E_MBTree_idxs_N_ck2idxs(data_BxF)
+    #
+    #     data_BxK = scipy.linalg.orth(data_BxF)
+    #
+    #     # plt.scatter(data_BxK[:, 0], data_BxK[:, 1])
+    #     # plt.scatter(data_BxF[:, 0], data_BxF[:, 1])
+    #
+    #     # for K, F in zip(data_BxK, data_BxF):
+    #     #     plt.arrow(F[1], F[1], K[0] - F[0], K[1] - F[1], color='white')
+    #
+    #     v_B = np.sum(data_BxK, axis=1)
+    #     idxs = np.argsort(v_B)
+    #
+    #     # plt.scatter(v_B, data_B)
+    #
+    #     # Creating plot
+    #     ax.scatter3D(data_B1, data_B2, v_B)
+    # # plt.scatter(data_B, np.arange(len(data_B)))
+    # #
+    # plt.show(block=True)
 
+    # plot sample in 2D
     # fig, axs = plt.subplots(len(methods), 1, figsize=(13, 50), sharex='all')
     #
     # for i, method in enumerate(methods):
@@ -343,116 +429,68 @@ if __name__ == '__main__':
 
     # calculate time cost
 
-    # ptrain_ptest = [
-    #                    (r'emotion.train.16000x6.jsonl', r'emotion.test.2000x6.jsonl'),
-    #                    (r'yelp.train.650000x5.jsonl', r'yelp.test.50000x5.jsonl'),
-    #                    (r'agnews.train.120000x4.jsonl', r'agnews.test.7600x4.jsonl'),
-    #                    (r'imdb.train.25000x2.jsonl', r'imdb.test.25000x2.jsonl'),
-    #                    (r'dbpedia.train.560000x14.jsonl', r'dbpedia.test.70000x14.jsonl'),
-    #                    (r'amazonpolar.train.3600000x2.jsonl', r'amazonpolar.test.400000x2.jsonl')
-    #                ][:]
-    #
-    # X_path_s = []
-    # for ptrain, ptest in tqdm(ptrain_ptest):
-    #     dataset_name = ptrain.split('.')[0]
-    #
-    #     dm = DataManager(path_data_jsonl_train=ptrain, path_data_jsonl_test=ptest)
-    #     X_train = dm.get_X_train()
-    #     X_test = dm.get_X_test()
-    #
-    #     X_path_s.append((X_train, ptrain))
-    #     X_path_s.append((X_test, ptest))
-    #
-    # X_path_s.sort(key=lambda X_path: len(X_path[0]))
-    #
-    # Ns = [len(X_path[0]) for X_path in X_path_s][:]
-    # method2costs = {}
-    # for method in tqdm(methods[:]):
-    #     method2costs[method.__name__] = []
-    #     for X, path in tqdm(X_path_s[:]):
-    #         N = len(X)
-    #
-    #         w = Watch()
-    #         try:
-    #             idxs = method(X)
-    #
-    #             if 'train' in path:
-    #                 idxs = np.array(idxs)
-    #
-    #                 fpath = os.path.join(Preset.root, 'c_idxs', f"{method.__name__}.{path.replace('.jsonl', '.idxs.npy')}")
-    #                 np.save(fpath, idxs)
-    #
-    #         except Exception as e:
-    #             print(traceback.format_exc())
-    #             pass
-    #         cost = w.see()
-    #
-    #         print(f"{N}, {cost}")
-    #
-    #         method2costs[method.__name__].append(cost)
-    #
-    # fig3 = plt.figure(figsize=(24, 13))
-    #
-    # for method_name, costs in method2costs.items():
-    #     plt.plot(Ns[:len(costs)], [c.total_seconds() for c in costs])
-    #     plt.scatter(Ns[:len(costs)], [c.total_seconds() for c in costs], color=plt.gca().lines[-1].get_color(), label=f'{method_name}')
-    #
-    # plt.legend()
-    #
-    # path_figure = os.path.join(Preset.root, r'd_figures')
-    # figfpath = os.path.join(path_figure, f'methods_time_cost_compare.png')
-    # plt.savefig(figfpath, bbox_inches='tight')
-    # plt.close()
+    ptrain_ptest = [
+                       (r'emotion.train.16000x6.jsonl', r'emotion.test.2000x6.jsonl'),
+                       (r'yelp.train.650000x5.jsonl', r'yelp.test.50000x5.jsonl'),
+                       (r'agnews.train.120000x4.jsonl', r'agnews.test.7600x4.jsonl'),
+                       (r'imdb.train.25000x2.jsonl', r'imdb.test.25000x2.jsonl'),
+                       (r'dbpedia.train.560000x14.jsonl', r'dbpedia.test.70000x14.jsonl'),
+                       (r'amazonpolar.train.3600000x2.jsonl', r'amazonpolar.test.400000x2.jsonl')
+                   ][:]
 
-    # plt.show(block=True)
+    X_path_s = []
+    for ptrain, ptest in tqdm(ptrain_ptest):
+        dataset_name = ptrain.split('.')[0]
 
-    # from pick last to first,                                              black to white
-    # cmap = plt.cm.get_cmap('bone')
-    # plt.scatter(data_BxF[nidxs[::-1], 0], data_BxF[nidxs[::-1], 1], marker='o', s=5, c=cmap(np.linspace(0, 1, len(nidxs) + 1))[:-1])
+        dm = DataManager(path_data_jsonl_train=ptrain, path_data_jsonl_test=ptest)
+        X_train = dm.get_X_train()
+        X_test = dm.get_X_test()
 
-    #
-    # tree = get_MBTree(data_BxF)
-    #
-    # fig, ax = plt.subplots(figsize=(10, 10))
-    #
-    #
-    # def draw(ax, tree, data_BxF):
-    #
-    #     cur_idx = tree['idx']
-    #
-    #     subs = tree['subs']
-    #     cur_point = data_BxF[cur_idx, :]
-    #
-    #     for sub in subs:
-    #         sub_idx = sub['idx']
-    #         sub_point = data_BxF[sub_idx, :]
-    #
-    #         plt.arrow(cur_point[0], cur_point[1], sub_point[0] - cur_point[0], sub_point[1] - cur_point[1], color='white')
-    #         # ax.plot([cur_point[0], sub_point[0]], [cur_point[1], sub_point[1]], marker='o', color='white')
-    #
-    #         print(f'{cur_idx}->{sub_idx}')
-    #         draw(ax, sub, data_BxF)
-    #     ax.annotate(f"{tree['d']}",
-    #                 xy=(cur_point[0], cur_point[1]), xycoords='data',
-    #                 xytext=(0, 0), textcoords='offset points',
-    #                 horizontalalignment='right', verticalalignment='bottom')
-    #
-    #
-    # draw(ax, tree, data_BxF)
-    # plt.show(block=True)
+        X_path_s.append((X_train, ptrain))
+        X_path_s.append((X_test, ptest))
 
-    #
-    # chain2idxs = {0: list(range(len(data_BxF)))}
-    # build_tree(data_BxF, chain2idxs)
-    # print(f"draw graph")
-    #
-    # chain2idxs = chain2idxs[0]
-    # for c0, c1_chain2idxs in chain2idxs.items():
-    #     if isinstance(c1_chain2idxs, list):
-    #         plt.scatter(data_BxF[c1_chain2idxs, 0], data_BxF[c1_chain2idxs, 1], s=0.5, label=f"cluster={c0}")
-    #     elif isinstance(c1_chain2idxs, dict):
-    #         for c1, c2_chain2idxs in c1_chain2idxs.items():
-    #             idxs = get_list(c2_chain2idxs)
-    #             plt.scatter(data_BxF[idxs, 0], data_BxF[idxs, 1], s=0.5, label=f"cluster={c0}x{c1}")
-    # plt.legend()
+    X_path_s.sort(key=lambda X_path: len(X_path[0]))
+
+    Ns = [len(X_path[0]) for X_path in X_path_s][:]
+    method2costs = {}
+    for method in tqdm(methods[:]):
+        method2costs[method.__name__] = []
+        for X, path in tqdm(X_path_s[:]):
+            N = len(X)
+
+            w = Watch()
+            try:
+                idxs = method(X)
+
+                if 'train' in path:
+                    idxs = np.array(idxs)
+
+                    fpath = os.path.join(Preset.root, 'c_idxs', f"{method.__name__}.{path.replace('.jsonl', '.idxs.npy')}")
+                    # np.save(fpath, idxs)
+
+            except Exception as e:
+                print(traceback.format_exc())
+                pass
+            cost = w.see()
+
+            print(f"{N}, {cost}")
+
+            method2costs[method.__name__].append(cost)
+
+    fig3 = plt.figure(figsize=(24, 13))
+
+    for method_name, costs in method2costs.items():
+        plt.plot(Ns[:len(costs)], [c.total_seconds() for c in costs])
+        plt.scatter(Ns[:len(costs)], [c.total_seconds() for c in costs], color=plt.gca().lines[-1].get_color(), label=f'{method_name}')
+
+    plt.xlabel('#items')
+    plt.ylabel('time cost of sample method (sec)')
+
+    plt.legend()
+
+    path_figure = os.path.join(Preset.root, r'd_figures')
+    figfpath = os.path.join(path_figure, f'methods_time_cost_compare.png')
+    plt.savefig(figfpath, bbox_inches='tight')
+    plt.close()
+
     # plt.show(block=True)

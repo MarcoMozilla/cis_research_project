@@ -11,6 +11,7 @@ from e_main.preset import Preset
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from pprint import pprint as p
+import scipy
 
 from e_main.tools import read_jsonx
 
@@ -130,8 +131,33 @@ class DataManager:
         idxs = np.load(fpath)
         return idxs
 
+    def get_rids_with_label(self):
+
+        cids_B = [self.label2cid[dctn['label']] for dctn in self.dctns_train]
+
+        cid2rids = [[] for _ in self.label2cid]
+        for rid, cid in enumerate(cids_B):
+            cid2rids[cid].append(rid)
+
+        for cid in range(self.N_labels):
+            random.shuffle(cid2rids[cid])
+
+        new_ridxs = []
+        while len(new_ridxs) < len(self.dctns_train):
+            for cid in range(self.N_labels):
+                if len(cid2rids[cid]) > 0:
+                    new_ridxs.append(cid2rids[cid].pop())
+
+        return np.array(new_ridxs)
+
 
 if __name__ == '__main__':
     pass
 
     dm = DataManager(path_data_jsonl_train=r'emotion.train.16000x6.jsonl', path_data_jsonl_test=r'emotion.test.2000x6.jsonl')
+
+    data_BxF = dm.get_X_train()
+    data_BxK = scipy.linalg.orth(data_BxF)
+    d = sorted(np.sum(data_BxK ** 2, axis=1))
+    # plt.scatter(d, np.zeros_like(d))
+    # plt.show(block=True)

@@ -62,17 +62,18 @@ rdf = pd.DataFrame(dctns)
 fpath = os.path.join(path_report, r'smry_score.csv')
 rdf.to_csv(fpath, index=False, encoding=const.ecd_utf8sig)
 
-cols = [col_f1, col_accuracy, col_precision, col_recall][:1]
+cols = [col_f1, col_accuracy, col_precision, col_recall]
 
-dataset_names = ['agnews', 'amazonpolar', 'dbpedia', 'emotion', 'imdb', 'yelp']
+dataset_names = ['amazonpolar', 'dbpedia', 'yelp', 'agnews', 'imdb', 'emotion'][:]
 # dataset_names = ['emotion', 'yelp']
 
-fig, axs = plt.subplots(len(dataset_names), 1, figsize=(13, 24), sharex='all')
 
-markers = ['.', '^', 'v']
-algo_names = ['randomsample', 'SampleAF', 'SampleBF']
+markers = ['.', 'x', '*']
+algo_names = ['RandomSample', 'SampleAF'][:]
 
-for aidx, col in enumerate(cols[:1]):
+for aidx, col in enumerate(cols):
+
+    fig, axs = plt.subplots(len(dataset_names), 1, figsize=(13, 24), sharex='all')
 
     for dataset_id, dataset_name in enumerate(dataset_names):
         for nn in nns:
@@ -89,16 +90,23 @@ for aidx, col in enumerate(cols[:1]):
                         # color = colors[dataset_id]
 
                         if tp == 'train':
-                            axs[dataset_id].plot(pcents, values, alpha=1, marker=marker, label=label)
+                            axs[dataset_id].plot(pcents, values, alpha=1, marker=marker, label=f"{label}={round(values[-1], 4)}")
 
                         elif tp == 'test':
                             # color = plt.gca().lines[-1].get_color()
-                            axs[dataset_id].plot(pcents, values, alpha=1, marker=marker, linestyle='dotted', label=label)
+                            axs[dataset_id].plot(pcents, values, alpha=1, marker=marker, linestyle='dotted', label=f"{label}={round(values[-1], 4)}")
 
         axs[dataset_id].legend()
         axs[dataset_id].set_xscale('log')
+        axs[dataset_id].set_ylabel(f'ave {col} score')
+        axs[dataset_id].set_xlabel('log(#items) of train dataset')
 
-plt.show(block=True)
+    path_figure = os.path.join(Preset.root, r'd_figures')
+    figfpath = os.path.join(path_figure, f'model_score.{col}.png')
+    plt.savefig(figfpath, bbox_inches='tight')
+    plt.close(fig)
+
+# plt.show(block=True)
 
 if __name__ == '__main__':
     pass

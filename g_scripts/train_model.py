@@ -4,6 +4,7 @@ from torch import nn
 
 from e_main.data_manager import DataManager
 from e_main.preset import Preset
+from e_main.tools import Watch
 from f_nn.nnManager import ModelManager, get_gen_minibatch_ridxs, get_label_weights, get_confuseMatrix_and_scoreTable
 from f_nn.nnModel import ResNetSimple
 from f_nn.nnUtil import array2tensor, fm_one_hot, to_one_hot
@@ -19,6 +20,15 @@ ptrain_ptest = [
     (r'amazonpolar.train.3600000x2.jsonl', r'amazonpolar.test.400000x2.jsonl')
 ]
 
+cost_dctns = []
+pcents = [
+    100, 200, 300, 500,
+    1000, 2000, 3000, 5000,
+    10000, 20000, 30000, 50000,
+    100000, 200000, 300000, 500000,
+    1000000, 2000000, 3000000, 5000000
+]
+
 for ptrain, ptest in ptrain_ptest:
     dataset_name = ptrain.split('.')[0]
 
@@ -27,9 +37,13 @@ for ptrain, ptest in ptrain_ptest:
     y_train = dm.get_y_train()
     X_test = dm.get_X_test()
     y_test = dm.get_y_test()
-    rids_RandomSample = dm.get_rids_random_sample()
+
+    rids_RandomSample = dm.get_rids_sample('reorder_method_rand')
     rids_SampleAF = dm.get_rids_sample('reorder_method_AF')
-    rids_SampleBF = dm.get_rids_sample('reorder_method_BF')
+    # rids_QuickExplore = dm.get_rids_sample('reorder_method_quick_explore')
+
+    # rids_SampleBF = dm.get_rids_sample('reorder_method_BF')
+    # rids_RandomSampleWithLabel = dm.get_rids_with_label()
 
     N_labels = dm.N_labels
 
@@ -37,26 +51,19 @@ for ptrain, ptest in ptrain_ptest:
     N_layers = int(3)
     nn_model = ResNetSimple(features=N_features, clusters=N_labels, hidden_size=N_hidden, layers=N_layers)
 
-    print(f'dataset_name={dataset_name}')
-    print(f'N_labels={N_labels}')
-
-    pcents = [
-        100, 200, 300, 500,
-        1000, 2000, 3000, 5000,
-        10000, 20000, 30000, 50000,
-        100000, 200000, 300000, 500000,
-        1000000, 2000000, 3000000, 5000000
-    ]
-
-    spname2spidxs = {  # 'RandomSample': rids_RandomSample,
+    spname2spidxs = {
+        'RandomSample': rids_RandomSample,
         'SampleAF': rids_SampleAF,
-        'SampleBF': rids_SampleBF
+        # 'QuickExplore': rids_QuickExplore
+        # 'RandomSampleWithLabel': rids_RandomSampleWithLabel
     }
 
-    for spname, sp_ridxs in spname2spidxs.items():
-        for pcent in pcents:
+    for pcent in pcents:
+        for spname, sp_ridxs in spname2spidxs.items():
 
             if pcent <= len(sp_ridxs):
+                print(f'dataset_name={dataset_name}')
+                print(f'N_labels={N_labels}')
                 print(f'pcent={pcent}')
 
                 rids_RandomSample_sub = sp_ridxs[:pcent]
@@ -72,7 +79,16 @@ for ptrain, ptest in ptrain_ptest:
                                                 y_test=y_test
                                                 )
 
-                    mm_pcent_sub.train_with_minibatch(lr=1e-2, epoch_show_every=10)
+                    w = Watch()
+                    mm_pcent_sub.train_with_minibatch(lr=5e-3, epoch_show_every=10)
+                    cost = w.seeSec()
+
+                    cost_dctn = {'#items': pcent,
+                                 'dataset_name': dataset_name,
+                                 'cost': cost}
+                    cost_dctns.append(cost_dctn)
 
 if __name__ == '__main__':
     pass
+    for line in cost_dctns:
+        print(line)
