@@ -1,6 +1,8 @@
 import os
 import pathlib
 import sys
+import time
+import traceback
 
 from sklearn.metrics import confusion_matrix
 from tqdm import tqdm
@@ -50,22 +52,44 @@ def get_confuseMatrix_and_scoreTable(labels_real, labels_pred, labels=None, path
         dctn[col_f1] = 2 * dctn[col_precision] * dctn[col_recall] / (dctn[col_precision] + dctn[col_recall]) if dctn[col_precision] * dctn[col_recall] > 0 else 0
         res_dctns.append(dctn)
 
-    Tdctn = {}
-    Tdctn[col_precision] = sum([dctn[col_precision] for dctn in res_dctns]) / len(res_dctns)
-    Tdctn[col_recall] = sum([dctn[col_recall] for dctn in res_dctns]) / len(res_dctns)
-    Tdctn[col_accuracy] = sum([dctn[col_accuracy] for dctn in res_dctns]) / len(res_dctns)
-    Tdctn[col_f1] = sum([dctn[col_f1] for dctn in res_dctns]) / len(res_dctns)
-    res_dctns.append(Tdctn)
+    ave_dctn = {}
+    ave_dctn[col_precision] = sum([dctn[col_precision] for dctn in res_dctns]) / len(res_dctns)
+    ave_dctn[col_recall] = sum([dctn[col_recall] for dctn in res_dctns]) / len(res_dctns)
+    ave_dctn[col_accuracy] = sum([dctn[col_accuracy] for dctn in res_dctns]) / len(res_dctns)
+    ave_dctn[col_f1] = sum([dctn[col_f1] for dctn in res_dctns]) / len(res_dctns)
 
-    index = labels + ['total']
+    res_dctns.append(ave_dctn)
+
+    # total_dctn = {}
+    # all_idxs = list(range(len(labels)))
+    # correct_count = sum(mtx[all_idxs, all_idxs])
+    # ave_dctn[col_precision] = -1
+    # total_dctn[col_recall] = -1
+    # print(df_mtx)
+    # print(correct_count)
+    # print(len(labels_real))
+
+    # total_dctn[col_accuracy] = correct_count / len(labels_real) if correct_count > 0 else 0
+    # total_dctn[col_f1] = -1
+    # res_dctns.append(total_dctn)
+
+    index = labels + ['average']
     df_score = pd.DataFrame(res_dctns, index=index, columns=[col_precision, col_recall, col_accuracy, col_f1])
 
-    if path_cfmx:
-        df_mtx.to_csv(path_cfmx, encoding=const.ecd_utf8sig)
-    if path_score:
-        df_score.to_csv(path_score, encoding=const.ecd_utf8sig)
+    count = 3
+    while count >= 0:
+        try:
+            if path_cfmx:
+                df_mtx.to_csv(path_cfmx, encoding=const.ecd_utf8sig)
+            if path_score:
+                df_score.to_csv(path_score, encoding=const.ecd_utf8sig)
+            return ave_dctn
+        except Exception as e:
+            print(traceback.format_exc())
+            count -= 1
+            time.sleep(1)
 
-    return Tdctn
+    return ave_dctn
 
 
 def get_gen_minibatch_ridxs(N_items, max_N_items_per_pass=10000):
@@ -132,7 +156,7 @@ class ModelManager:
         optimizer = torch.optim.NAdam(self.model.parameters(), lr=lr)
 
         prev_train_f1 = 0
-        forgive = 5
+        forgive = 10
         f1_early_stop = 0.95
         w = Watch()
 
