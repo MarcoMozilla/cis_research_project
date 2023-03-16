@@ -101,7 +101,7 @@ def get_gen_minibatch_ridxs(N_items, max_N_items_per_pass=10000):
 
 
 def get_label_weights(y, N_clusters):
-    counts = np.array([np.sum(y == cid) for cid in range(N_clusters)])
+    counts = np.array([np.sum(y == cid) for cid in range(N_clusters)]) + 1
     weights = 1 / counts
     weights = weights / np.sum(weights)
     # weights = weights / np.max(weights)
@@ -111,7 +111,7 @@ def get_label_weights(y, N_clusters):
 
 class ModelManager:
 
-    def __init__(self, model, fname_model, X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray, y_test: np.ndarray):
+    def __init__(self, model, fname_model, X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray, y_test: np.ndarray, refresh=True):
         self.model = model.to(dtype=MM_dtype, device=MM_device)
 
         self.fname_model = fname_model
@@ -129,14 +129,19 @@ class ModelManager:
         self.mc = MemCache()
         self.mc.mclean()
         # self.mc.show_cuda_info()
-        try:
-            self.model.load_state_dict(torch.load(self.fpath_pt))
-            print(f'load NN model state')
-            self.model.eval()
-        except Exception:
-            pass
-            print(f'load NN model state fail ; init state')
 
+        loaded = False
+        if not refresh:
+            try:
+                self.model.load_state_dict(torch.load(self.fpath_pt))
+                print(f'load NN model state')
+                self.model.eval()
+                loaded = True
+            except Exception:
+                pass
+
+        if not loaded:
+            print(f'load NN model state fail ; init state')
             self.model.apply(weight_init)
 
     def train_with_minibatch(self, X: np.ndarray = None, y1hot: np.ndarray = None, gen_ridxs=None, lr=1e-3, epoch=100000, epoch_show_every=100, loss_fctn=None):
@@ -157,7 +162,7 @@ class ModelManager:
 
         prev_train_f1 = 0
         forgive = 10
-        f1_early_stop = 0.95
+        f1_early_stop = 0.995
         w = Watch()
 
         self.model.train(True)

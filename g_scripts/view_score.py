@@ -36,7 +36,16 @@ nns = set()
 for fname in fnames[:]:
     fpath = os.path.join(path_tables, fname)
     body, tp, _, _ = fname.split('.')
-    dataset_name, NN, F, K, H, L, algo_name, pcent = body.split('_')
+    body_parts = body.split('_')
+
+    pcent = body_parts[-1]
+    algo_name = '_'.join(body_parts[6:-1])
+    L = body_parts[5]
+    H = body_parts[4]
+    K = body_parts[3]
+    F = body_parts[2]
+    NN = body_parts[1]
+    dataset_name = body_parts[0]
 
     nnsent = f"{NN}_{F}_{K}_{H}_{L}"
     nns.add(nnsent)
@@ -68,33 +77,41 @@ dataset_names = ['amazonpolar', 'dbpedia', 'yelp', 'agnews', 'imdb', 'emotion'][
 # dataset_names = ['emotion', 'yelp']
 
 
-markers = ['.', 'x', '*']
-algo_names = ['RandomSample', 'SampleAF'][:]
+markers = ['.', 'x', 'x', 'x', 'x', 'x', 'x']
+algo_names = [
+    'RAND'
+    , 'CV'
+    , 'EV'
+    , 'CV_EV'
+    , 'CV_RAND'
+    , 'CR_CV_RAND'
+    , 'CV_EV_RAND'
+]
 
+colors = plt.get_cmap('brg')(np.linspace(0, 1, len(algo_names) * 2 + 2))[1:-1:2]
 for aidx, col in enumerate(cols):
 
     fig, axs = plt.subplots(len(dataset_names), 1, figsize=(13, 24), sharex='all')
 
     for dataset_id, dataset_name in enumerate(dataset_names):
         for nn in nns:
-            # colors = plt.get_cmap('brg')(np.linspace(0, 1, len(dataset_names) + 2))[1:-1]
-            for algo_name, marker in zip(algo_names, markers):
+            for algo_id, (algo_name, marker) in enumerate(zip(algo_names, markers)):
                 for tp in ['train', 'test']:
                     label = f'{dataset_name}-{nn}-{algo_name}-{tp}'
 
                     sub_rdf = rdf[(rdf['dataset_name'] == dataset_name) & (rdf['nn'] == nn) & (rdf['algo_name'] == algo_name) & (rdf['col'] == col) & (rdf['tp'] == tp)]
                     if len(sub_rdf) > 0:
-                        values = sub_rdf['value'].tolist()
-                        pcents = sub_rdf['pcent'].tolist()
+                        values = sub_rdf['value'].tolist()[:]
+                        pcents = sub_rdf['pcent'].tolist()[:]
 
                         # color = colors[dataset_id]
 
                         if tp == 'train':
-                            axs[dataset_id].plot(pcents, values, alpha=1, marker=marker, label=f"{label}={round(values[-1], 4)}")
+                            axs[dataset_id].plot(pcents, values, alpha=1, marker=marker, color=colors[algo_id], label=f"{label}={round(values[-1], 4)}")
 
                         elif tp == 'test':
                             # color = plt.gca().lines[-1].get_color()
-                            axs[dataset_id].plot(pcents, values, alpha=1, marker=marker, linestyle='dotted', label=f"{label}={round(values[-1], 4)}")
+                            axs[dataset_id].plot(pcents, values, alpha=1, marker=marker, color=colors[algo_id], linestyle='dotted', label=f"{label}={round(values[-1], 4)}")
 
         axs[dataset_id].legend()
         axs[dataset_id].set_xscale('log')
