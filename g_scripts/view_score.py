@@ -94,6 +94,7 @@ for aidx, col in enumerate(cols):
     fig, axs = plt.subplots(len(dataset_names), 1, figsize=(13, 24), sharex='all')
 
     for dataset_id, dataset_name in enumerate(dataset_names):
+        pcents_all = set()
         for nn in nns:
             for algo_id, (algo_name, marker) in enumerate(zip(algo_names, markers)):
                 for tp in ['train', 'test']:
@@ -103,7 +104,7 @@ for aidx, col in enumerate(cols):
                     if len(sub_rdf) > 0:
                         values = sub_rdf['value'].tolist()[:]
                         pcents = sub_rdf['pcent'].tolist()[:]
-
+                        pcents_all |= set(pcents)
                         # color = colors[dataset_id]
 
                         if tp == 'train':
@@ -113,10 +114,15 @@ for aidx, col in enumerate(cols):
                             # color = plt.gca().lines[-1].get_color()
                             axs[dataset_id].plot(pcents, values, alpha=1, marker=marker, color=colors[algo_id], linestyle='dotted', label=f"{label}={round(values[-1], 4)}")
 
-        axs[dataset_id].legend()
+        axs[dataset_id].legend(bbox_to_anchor=(1.01, 1.01), loc=2)
+
+        pcents_all = sorted(list(pcents_all))
         axs[dataset_id].set_xscale('log')
+        axs[dataset_id].set_xticks(pcents_all)
+        # axs[dataset_id].set_xticklabels(pcents_all)
+        axs[dataset_id].get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
         axs[dataset_id].set_ylabel(f'ave {col} score')
-        axs[dataset_id].set_xlabel('log(#items) of train dataset')
+        axs[dataset_id].set_xlabel('#items of train dataset (log scaled)')
 
     path_figure = os.path.join(Preset.root, r'd_figures')
     figfpath = os.path.join(path_figure, f'model_score.{col}.png')
