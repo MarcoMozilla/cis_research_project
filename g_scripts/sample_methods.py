@@ -141,153 +141,122 @@ def get_method_EUC_VIRT_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
         return [mean_idx], N, ck2idxs
 
 
-def get_method_K1_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
-    B, F = data_BxF.shape
+def get_method_COS_VIRT_MEAN_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
     N = len(idxs)
-    n_clusters = F
+
     if len(idxs) == 1:
         mean_idx = idxs[0]
         return [mean_idx], N, {}
     else:
-        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+        B, F = data_BxF.shape
+        po = 2 ** np.arange(F)
 
-        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
-
-        # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
         mean_local_idx = np.argmax(np.sum((data_BxF[idxs, :] * mean_data_F), axis=1))
 
         mean_idx = idxs[mean_local_idx]
         wash_idxs = idxs[:mean_local_idx] + idxs[mean_local_idx + 1:]
 
         ck2idxs = {}
-        if len(wash_idxs) == 0:
-            pass
-        else:
-            if len(wash_idxs) == 1:
-                ck2idxs[0] = wash_idxs
-            else:
-                while len(wash_idxs) < n_clusters:
-                    n_clusters = max(1, n_clusters // 2)
 
-                bisect_means = BisectingKMeans(n_clusters=n_clusters, copy_x=False).fit(data_BxF[wash_idxs, :])
-                chain_sub_keys = bisect_means.labels_
-                for ck, idx in zip(chain_sub_keys, wash_idxs):
-                    if not ck in ck2idxs:
-                        ck2idxs[ck] = []
-                    ck2idxs[ck].append(idx)
+        center_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
+        if len(wash_idxs) > 0:
+            chain_sub_keys = np.array(data_BxF[wash_idxs, :] < center_data_F, dtype=bool) @ po
+            for ck, idx in zip(chain_sub_keys, wash_idxs):
+                if not ck in ck2idxs:
+                    ck2idxs[ck] = []
+                ck2idxs[ck].append(idx)
 
         return [mean_idx], N, ck2idxs
 
 
-def get_method_K2_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
-    B, F = data_BxF.shape
+def get_method_EUC_VIRT_MEAN_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
     N = len(idxs)
-    n_clusters = F
+
     if len(idxs) == 1:
         mean_idx = idxs[0]
         return [mean_idx], N, {}
     else:
-        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+        B, K = data_BxF.shape
+        po = 2 ** np.arange(K)
 
-        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
-
-        # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
-        mean_local_idx = np.argmax(np.sum((data_BxF[idxs, :] * mean_data_F), axis=1))
+        # use mean represent the whole part
+        mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+        mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
 
         mean_idx = idxs[mean_local_idx]
         wash_idxs = idxs[:mean_local_idx] + idxs[mean_local_idx + 1:]
 
-        ck2idxs = {}
-        if len(wash_idxs) == 0:
-            pass
-        else:
-            if len(wash_idxs) == 1:
-                ck2idxs[0] = wash_idxs
-            else:
-                while len(wash_idxs) < n_clusters:
-                    n_clusters = max(1, n_clusters // 2)
+        # cut by center
+        center_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
 
-                bisect_means = BisectingKMeans(n_clusters=n_clusters, copy_x=False, bisecting_strategy='largest_cluster').fit(data_BxF[wash_idxs, :])
-                chain_sub_keys = bisect_means.labels_
-                for ck, idx in zip(chain_sub_keys, wash_idxs):
-                    if not ck in ck2idxs:
-                        ck2idxs[ck] = []
-                    ck2idxs[ck].append(idx)
+        ck2idxs = {}
+        if len(wash_idxs) > 0:
+            chain_sub_keys = np.array(data_BxF[wash_idxs, :] < center_data_F, dtype=bool) @ po
+            for ck, idx in zip(chain_sub_keys, wash_idxs):
+                if not ck in ck2idxs:
+                    ck2idxs[ck] = []
+                ck2idxs[ck].append(idx)
 
         return [mean_idx], N, ck2idxs
 
 
-def get_method_K3_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
-    B, F = data_BxF.shape
+def get_method_COS_VIRT_MEDIAN_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
     N = len(idxs)
-    n_clusters = F
+
     if len(idxs) == 1:
         mean_idx = idxs[0]
         return [mean_idx], N, {}
     else:
-        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+        B, F = data_BxF.shape
+        po = 2 ** np.arange(F)
 
-        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
-
-        # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        mean_data_F = np.median(data_BxF[idxs, :], axis=0)
         mean_local_idx = np.argmax(np.sum((data_BxF[idxs, :] * mean_data_F), axis=1))
 
         mean_idx = idxs[mean_local_idx]
         wash_idxs = idxs[:mean_local_idx] + idxs[mean_local_idx + 1:]
 
         ck2idxs = {}
-        if len(wash_idxs) == 0:
-            pass
-        else:
-            if len(wash_idxs) == 1:
-                ck2idxs[0] = wash_idxs
-            else:
-                while len(wash_idxs) < n_clusters:
-                    n_clusters = max(1, n_clusters // 2)
 
-                bisect_means = BisectingKMeans(n_clusters=n_clusters, copy_x=False, algorithm='elkan').fit(data_BxF[wash_idxs, :])
-                chain_sub_keys = bisect_means.labels_
-                for ck, idx in zip(chain_sub_keys, wash_idxs):
-                    if not ck in ck2idxs:
-                        ck2idxs[ck] = []
-                    ck2idxs[ck].append(idx)
+        center_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
+        if len(wash_idxs) > 0:
+            chain_sub_keys = np.array(data_BxF[wash_idxs, :] < center_data_F, dtype=bool) @ po
+            for ck, idx in zip(chain_sub_keys, wash_idxs):
+                if not ck in ck2idxs:
+                    ck2idxs[ck] = []
+                ck2idxs[ck].append(idx)
 
         return [mean_idx], N, ck2idxs
 
 
-def get_method_K4_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
-    B, F = data_BxF.shape
+def get_method_EUC_VIRT_MEDIAN_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
     N = len(idxs)
-    n_clusters = F
+
     if len(idxs) == 1:
         mean_idx = idxs[0]
         return [mean_idx], N, {}
     else:
-        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+        B, K = data_BxF.shape
+        po = 2 ** np.arange(K)
 
-        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
-
-        # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
-        mean_local_idx = np.argmax(np.sum((data_BxF[idxs, :] * mean_data_F), axis=1))
+        # use mean represent the whole part
+        mean_data_F = np.median(data_BxF[idxs, :], axis=0)
+        mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
 
         mean_idx = idxs[mean_local_idx]
         wash_idxs = idxs[:mean_local_idx] + idxs[mean_local_idx + 1:]
-        ck2idxs = {}
-        if len(wash_idxs) == 0:
-            pass
-        else:
-            if len(wash_idxs) == 1:
-                ck2idxs[0] = wash_idxs
-            else:
-                while len(wash_idxs) < n_clusters:
-                    n_clusters = max(1, n_clusters // 2)
 
-                bisect_means = BisectingKMeans(n_clusters=n_clusters, copy_x=False, algorithm='elkan', bisecting_strategy='largest_cluster').fit(data_BxF[wash_idxs, :])
-                chain_sub_keys = bisect_means.labels_
-                for ck, idx in zip(chain_sub_keys, wash_idxs):
-                    if not ck in ck2idxs:
-                        ck2idxs[ck] = []
-                    ck2idxs[ck].append(idx)
+        # cut by center
+        center_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
+
+        ck2idxs = {}
+        if len(wash_idxs) > 0:
+            chain_sub_keys = np.array(data_BxF[wash_idxs, :] < center_data_F, dtype=bool) @ po
+            for ck, idx in zip(chain_sub_keys, wash_idxs):
+                if not ck in ck2idxs:
+                    ck2idxs[ck] = []
+                ck2idxs[ck].append(idx)
 
         return [mean_idx], N, ck2idxs
 
@@ -364,6 +333,26 @@ def reorder_method_CV(data_BxF):
 
 def reorder_method_EV(data_BxF):
     res = reorder_by_MBTree(data_BxF, get_method_EUC_VIRT_MBTree_idxs_N_ck2idxs, idxs=None)
+    return res
+
+
+def reorder_method_CVMean(data_BxF):
+    res = reorder_by_MBTree(data_BxF, get_method_COS_VIRT_MEAN_MBTree_idxs_N_ck2idxs, idxs=None)
+    return res
+
+
+def reorder_method_EVMean(data_BxF):
+    res = reorder_by_MBTree(data_BxF, get_method_EUC_VIRT_MEAN_MBTree_idxs_N_ck2idxs, idxs=None)
+    return res
+
+
+def reorder_method_CVMedian(data_BxF):
+    res = reorder_by_MBTree(data_BxF, get_method_COS_VIRT_MEDIAN_MBTree_idxs_N_ck2idxs, idxs=None)
+    return res
+
+
+def reorder_method_EVMedian(data_BxF):
+    res = reorder_by_MBTree(data_BxF, get_method_EUC_VIRT_MEDIAN_MBTree_idxs_N_ck2idxs, idxs=None)
     return res
 
 
@@ -460,22 +449,6 @@ def reorder_method_CV_EV_RAND(data_BxF):
     return ridxs
 
 
-def reorder_method_K1F(data_BxF):
-    return reorder_by_MBTree(data_BxF, get_method_K1_MBTree_idxs_N_ck2idxs, idxs=None)
-
-
-def reorder_method_K2F(data_BxF):
-    return reorder_by_MBTree(data_BxF, get_method_K2_MBTree_idxs_N_ck2idxs, idxs=None)
-
-
-def reorder_method_K3F(data_BxF):
-    return reorder_by_MBTree(data_BxF, get_method_K3_MBTree_idxs_N_ck2idxs, idxs=None)
-
-
-def reorder_method_K4F(data_BxF):
-    return reorder_by_MBTree(data_BxF, get_method_K4_MBTree_idxs_N_ck2idxs, idxs=None)
-
-
 def reorder_method_RAND(data_BxF):
     ridxs = np.arange(len(data_BxF))
     np.random.shuffle(ridxs)
@@ -483,13 +456,17 @@ def reorder_method_RAND(data_BxF):
 
 
 methods = [
-    reorder_method_RAND
-    , reorder_method_CV
-    , reorder_method_EV
-    , reorder_method_CV_EV
-    , reorder_method_CV_RAND
-    , reorder_method_CR_CV_RAND
-    , reorder_method_CV_EV_RAND
+    reorder_method_CVMean
+    , reorder_method_EVMean
+    , reorder_method_CVMedian
+    , reorder_method_EVMedian
+    # , reorder_method_RAND
+    # , reorder_method_CV
+    # , reorder_method_EV
+    # , reorder_method_CV_EV
+    # , reorder_method_CV_RAND
+    # , reorder_method_CR_CV_RAND
+    # , reorder_method_CV_EV_RAND
     # , reorder_method_CR_RAND
     # , reorder_method_CR_CV
     # , reorder_method_ER
@@ -555,7 +532,7 @@ if __name__ == '__main__':
     # plt.show(block=True)
 
     # plot sample in 2D
-    generate_sample_on_simulate = True
+    generate_sample_on_simulate = False
     if generate_sample_on_simulate:
         fig, axs = plt.subplots(len(methods), 1, figsize=(13, 50), sharex='all')
         for i, method in enumerate(tqdm(methods)):
@@ -621,7 +598,6 @@ if __name__ == '__main__':
                 cost = w.see()
                 print(f"{N}, {cost}")
                 method2costs[method.__name__].append(cost)
-
 
         fig3 = plt.figure(figsize=(24, 13))
 
