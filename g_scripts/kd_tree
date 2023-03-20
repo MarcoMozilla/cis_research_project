@@ -1,0 +1,41 @@
+import numpy as np
+from scipy.spatial import KDTree
+
+def kdtree_classifier(X):
+    """
+ 
+    Parameters:
+    ----------
+    X: numpy.ndarray
+        数据集，每一行为一个数据点，每一列为一个特征
+
+    Returns:
+    -------
+    indexs: numpy.ndarray
+        数据集每个数据点的分类结果，即其所属类别的索引值
+    """
+    # 构建kd tree
+    tree = KDTree(X)
+
+    # 预测每个数据点所属的类别
+    indexs = np.zeros(X.shape[0], dtype=int)
+    for i, x in enumerate(X):
+        # 找到距离当前数据点最近的邻居
+        _, idx = tree.query(x, k=1)
+        indexs[i] = idx
+
+    return indexs
+
+if __name__ == "__mains__" :
+      base_path = r'E:\b_data'
+      files = os.listdir(base_path)
+      fig, ax = plt.subplots()
+      for file in files:
+          X = np.loadtxt(os.path.join(base_path, file))
+          indexs = kdtree_classifier(X)
+          # 绘制分类结果
+          ax.scatter(X[:, 0], X[:, 1], c=indexs, cmap='rainbow')
+          ax.set_xlabel('Feature 1')
+          ax.set_ylabel('Feature 2')
+          ax.set_title('Classification Results')
+          plt.show()
