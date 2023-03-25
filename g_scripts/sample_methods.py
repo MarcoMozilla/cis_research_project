@@ -456,28 +456,17 @@ def reorder_method_RAND(data_BxF):
 
 
 methods = [
-    reorder_method_CVMean
+    reorder_method_RAND
+    , reorder_method_CV
+    , reorder_method_EV
+    , reorder_method_CV_EV
+    , reorder_method_CVMean
     , reorder_method_EVMean
     , reorder_method_CVMedian
     , reorder_method_EVMedian
-    # , reorder_method_RAND
-    # , reorder_method_CV
-    # , reorder_method_EV
-    # , reorder_method_CV_EV
-    # , reorder_method_CV_RAND
-    # , reorder_method_CR_CV_RAND
-    # , reorder_method_CV_EV_RAND
-    # , reorder_method_CR_RAND
-    # , reorder_method_CR_CV
-    # , reorder_method_ER
-    # , reorder_method_CR
+    , reorder_method_CV_RAND
+    , reorder_method_CV_EV_RAND
 
-    # , reorder_method_A2F
-    # , reorder_method_O1F
-    # , reorder_method_KF
-    # , reorder_method_K2F
-    # , reorder_method_K3F
-    # , reorder_method_K4F
 ]
 
 np.random.seed(const.seed)
@@ -488,8 +477,7 @@ if __name__ == '__main__':
 
     # data_B = np.random.rand(5000) * 2 * np.pi
 
-    ays = np.array([1.1, 2.2, 3.3])
-    data_B = np.clip(np.random.normal(0, np.pi / 16, 5000), -np.pi, np.pi)
+    data_B = np.clip(np.random.normal(0, np.pi / 8, 5000), -np.pi, np.pi)
 
     data_B1 = np.cos(data_B)
     data_B2 = np.sin(data_B)
@@ -532,7 +520,7 @@ if __name__ == '__main__':
     # plt.show(block=True)
 
     # plot sample in 2D
-    generate_sample_on_simulate = False
+    generate_sample_on_simulate = True
     if generate_sample_on_simulate:
         fig, axs = plt.subplots(len(methods), 1, figsize=(13, 50), sharex='all')
         for i, method in enumerate(tqdm(methods)):
@@ -544,13 +532,22 @@ if __name__ == '__main__':
             axs[i].scatter(data_B[nidxs], np.linspace(0, len(nidxs), len(nidxs)), s=0.5, label=f'{method.__name__}')
             axs[i].legend()
 
-            axs[i].set_xlabel(f'theta value, cost = {cost.total_seconds()} s')
-            axs[i].set_ylabel('rank')
-
+        axs[i].set_xlabel(f'theta value, cost = {cost.total_seconds()} s')
+        axs[i].set_ylabel('rank')
         path_figure = os.path.join(Preset.root, r'd_figures')
         figfpath = os.path.join(path_figure, f'method_on_Circle_Gussian.png')
         plt.savefig(figfpath, bbox_inches='tight')
         plt.close(fig)
+
+        # fig = plt.figure(figsize=plt.figaspect(0.5))
+        # for mi, method in enumerate(methods):
+        #     ax = fig.add_subplot(4, 4, mi + 1, projection="3d")
+        # 
+        #     # Creating plot
+        #     nidxs = methods[mi](data_BxF)
+        #     ax.scatter3D(data_B1[nidxs], data_B2[nidxs], np.linspace(0, len(nidxs), len(nidxs)), s=0.5, label=f'{method.__name__}')
+        #     ax.legend()
+        # plt.show(block=True)
 
     # calculate time cost
     generate_idxs_buffer = True

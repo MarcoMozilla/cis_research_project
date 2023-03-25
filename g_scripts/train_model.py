@@ -25,7 +25,7 @@ ptrain_ptest = [
 
 cost_dctns = []
 pcents = [
-    50, 70
+    25, 50, 70
     , 100, 200, 300, 500, 700
     , 1000, 2000, 3000, 5000
     , 10000, 16000, 20000, 25000, 30000, 50000
@@ -54,8 +54,11 @@ for pcent in pcents:
                 , 'EV': dm.get_rids_sample('reorder_method_EV')
                 , 'CV_EV': dm.get_rids_sample('reorder_method_CV_EV')
                 , 'CV_RAND': dm.get_rids_sample('reorder_method_CV_RAND')
-                , 'CR_CV_RAND': dm.get_rids_sample('reorder_method_CR_CV_RAND')
                 , 'CV_EV_RAND': dm.get_rids_sample('reorder_method_CV_EV_RAND')
+                , 'CVMean': dm.get_rids_sample('reorder_method_CVMean')
+                , 'EVMean': dm.get_rids_sample('reorder_method_EVMean')
+                , 'CVMedian': dm.get_rids_sample('reorder_method_CVMedian')
+                , 'EVMedian': dm.get_rids_sample('reorder_method_EVMedian')
 
             }
 

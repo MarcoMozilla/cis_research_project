@@ -4,7 +4,7 @@ import sys
 import time
 import traceback
 
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, classification_report
 from tqdm import tqdm
 
 from e_main import const
@@ -31,50 +31,18 @@ fpath_models_custom = os.path.join(Preset.root, r'a_models_custom')
 
 def get_confuseMatrix_and_scoreTable(labels_real, labels_pred, labels=None, path_cfmx=None, path_score=None):
     mtx = confusion_matrix(labels_real, labels_pred, labels=labels)
-
     df_mtx = pd.DataFrame(mtx, index=labels, columns=labels)
-    other = lambda x: [v for v in list(range(len(labels))) if v != x]
 
-    res_dctns = []
+    labels = sorted(list(set(labels_real) | set(labels_pred)))
+    report_score = classification_report(labels_real, labels_pred, target_names=labels, digits=4, output_dict=True, zero_division=0)
+    df_score = pd.DataFrame(report_score).transpose()
+    # print(df_score)
 
-    for idx, label in enumerate(labels):
-        TP = sum(mtx[[idx], [idx]])
-        FN = sum(mtx[[idx], other(idx)])
-        FP = sum(mtx[other(idx), [idx]])
-        TN = sum(mtx[other(idx), other(idx)])
-
-        dctn = {}
-
-        dctn[col_precision] = TP / (TP + FP) if TP > 0 else 0
-        dctn[col_recall] = TP / (TP + FN) if TP > 0 else 0
-        dctn[col_accuracy] = (TP + TN) / (TP + TN + FP + FN) if (TP + TN) > 0 else 0
-
-        dctn[col_f1] = 2 * dctn[col_precision] * dctn[col_recall] / (dctn[col_precision] + dctn[col_recall]) if dctn[col_precision] * dctn[col_recall] > 0 else 0
-        res_dctns.append(dctn)
-
-    ave_dctn = {}
-    ave_dctn[col_precision] = sum([dctn[col_precision] for dctn in res_dctns]) / len(res_dctns)
-    ave_dctn[col_recall] = sum([dctn[col_recall] for dctn in res_dctns]) / len(res_dctns)
-    ave_dctn[col_accuracy] = sum([dctn[col_accuracy] for dctn in res_dctns]) / len(res_dctns)
-    ave_dctn[col_f1] = sum([dctn[col_f1] for dctn in res_dctns]) / len(res_dctns)
-
-    res_dctns.append(ave_dctn)
-
-    # total_dctn = {}
-    # all_idxs = list(range(len(labels)))
-    # correct_count = sum(mtx[all_idxs, all_idxs])
-    # ave_dctn[col_precision] = -1
-    # total_dctn[col_recall] = -1
-    # print(df_mtx)
-    # print(correct_count)
-    # print(len(labels_real))
-
-    # total_dctn[col_accuracy] = correct_count / len(labels_real) if correct_count > 0 else 0
-    # total_dctn[col_f1] = -1
-    # res_dctns.append(total_dctn)
-
-    index = labels + ['average']
-    df_score = pd.DataFrame(res_dctns, index=index, columns=[col_precision, col_recall, col_accuracy, col_f1])
+    dctn = {}
+    dctn[col_accuracy] = df_score['f1-score']['accuracy']
+    dctn[col_f1] = df_score['f1-score']['macro avg']
+    dctn[col_precision] = df_score['precision']['macro avg']
+    dctn[col_recall] = df_score['recall']['macro avg']
 
     count = 3
     while count >= 0:
@@ -83,13 +51,13 @@ def get_confuseMatrix_and_scoreTable(labels_real, labels_pred, labels=None, path
                 df_mtx.to_csv(path_cfmx, encoding=const.ecd_utf8sig)
             if path_score:
                 df_score.to_csv(path_score, encoding=const.ecd_utf8sig)
-            return ave_dctn
+            return dctn
         except Exception as e:
             print(traceback.format_exc())
             count -= 1
             time.sleep(1)
 
-    return ave_dctn
+    return dctn
 
 
 def get_gen_minibatch_ridxs(N_items, max_N_items_per_pass=10000):
@@ -259,3 +227,22 @@ class ModelManager:
 
 if __name__ == '__main__':
     pass
+
+    labels_real = [1, 0, 1]
+    labels_pred = [1, 1, 1]
+
+    labels = [0, 1, 2]
+    mtx = confusion_matrix(labels_real, labels_pred, labels=labels)
+
+    df_mtx = pd.DataFrame(mtx, index=labels, columns=labels)
+
+    labels = sorted(list(set(labels_real) | set(labels_pred)))
+    report_score = classification_report(labels_real, labels_pred, target_names=labels, digits=4, output_dict=True, zero_division=0)
+    df_score = pd.DataFrame(report_score).transpose()
+
+    dctn = {}
+
+    dctn[col_accuracy] = df_score['accuracy']['f1-score']
+    dctn[col_f1] = df_score['macro avg']['f1-score']
+    dctn[col_precision] = df_score['macro avg']['precision']
+    dctn[col_recall] = df_score['macro avg']['recall']
