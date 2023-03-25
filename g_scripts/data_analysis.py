@@ -67,7 +67,7 @@ for fname in fnames[:]:
 
         dctn['len_char'] = len_char
 
-fig, axs = plt.subplots(len(fname2dctns) // 2, 1, figsize=(13, 24))
+fig, axs = plt.subplots(len(fname2dctns) // 2, 1, figsize=(13, 24),sharex='all')
 
 for idx in range(0, len(fnames) // 2):
     len_char_s_test = [dctn['len_char'] for dctn in fname2dctns[fnames[idx * 2]]]
@@ -84,5 +84,13 @@ for idx in range(0, len(fnames) // 2):
     print(f"max_len_char: {max_len_char} ")
 
     axs[idx].legend()
+    axs[idx].set_xlabel('# char in each item')
+    # axs[idx].set_xscale('log')
+    axs[idx].set_ylabel('frequency')
 
-plt.show(block=True)
+path_figure = os.path.join(Preset.root, r'd_figures')
+figfpath = os.path.join(path_figure, f'text_length.png')
+plt.savefig(figfpath, bbox_inches='tight')
+plt.close()
+
+# plt.show(block=True)
