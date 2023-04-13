@@ -1,0 +1,718 @@
+y_test_pred = fm_one_hot(mm_pcent_10.predict(X_test))
+y_train_pred = fm_one_hot(mm_pcent_10.predict(X_train))
+
+print('#train')
+df_mtx, df_score = get_confuseMatrix_and_scoreTable(y_train, y_train_pred, labels=list(range(N_labels)))
+print(df_mtx)
+print(df_score)
+
+print('#test')
+df_mtx, df_score = get_confuseMatrix_and_scoreTable(y_test, y_test_pred, labels=list(range(N_labels)))
+print(df_mtx)
+print(df_score)
+
+# X
+# mm_emotion_10.tr
+#
+#
+
+# mm_emotion_20 = ModelManager(fpath=os.path.join(fpath_models_custom,r'emotion_random_sampling'))
+# mm_emotion_30 = ModelManager(fpath=os.path.join(fpath_models_custom,r'emotion_random_sampling'))
+# mm_emotion_40 = ModelManager(fpath=os.path.join(fpath_models_custom,r'emotion_random_sampling'))
+# mm_emotion_50 = ModelManager(fpath=os.path.join(fpath_models_custom,r'emotion_random_sampling'))
+# mm_emotion_60 = ModelManager(fpath=os.path.join(fpath_models_custom,r'emotion_random_sampling'))
+import numpy as np
+from matplotlib import pyplot as plt
+from scipy.linalg import polar
+import os
+import pathlib
+import random
+
+import numpy as np
+from tqdm import tqdm
+
+from e_main.preset import Preset
+
+# draw train vector space in to figures and see distribution
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from pprint import pprint as p
+
+mpl.rcParams['font.sans-serif'] = ['SimHei']
+mpl.rcParams['mathtext.fontset'] = 'cm'
+mpl.rcParams['axes.unicode_minus'] = False
+plt.style.use('Solarize_Light2')
+
+
+def cart2polar(data_BxF: np.ndarray):
+    B, F = data_BxF.shape
+
+    theta_BxF = np.zeros((B, F))
+
+    r_B = np.sqrt(np.sum(data_BxF ** 2, axis=1))
+
+    theta_BxF[:, 0] = r_B
+    sin_theta_B = np.ones(B)
+
+    for i in range(1, F):
+        theta_BxF[:, i] = np.arccos(data_BxF[:, i] / (sin_theta_B))
+        sin_theta_B *= np.sin(theta_BxF[:, i])
+
+    return theta_BxF
+
+
+def cart2polar1(data_BxF: np.ndarray):
+    B, F = data_BxF.shape
+
+    theta_BxF = np.zeros((B, F))
+
+    r_B = np.sqrt(np.sum(data_BxF ** 2, axis=1))
+
+    theta_BxF[:, 0] = r_B
+    sin_theta_B = np.ones(B)
+
+    for i in range(0, F - 1):
+        theta_BxF[:, i + 1] = np.arccos(data_BxF[:, i] / (r_B * sin_theta_B))
+        sin_theta_B *= np.sin(theta_BxF[:, i])
+
+    return theta_BxF
+
+
+
+if __name__ == '__main__':
+    pass
+
+    data_BxF = np.random.rand(100000, 3) * 2 - 1
+    polar_BxF_0 = cart2polar(data_BxF)
+    polar_BxF_1 = cart2polar1(data_BxF)
+
+    plt.scatter(polar_BxF_0[:, 1], polar_BxF_0[:, 2], s=0.1, label='polar_BxF_0')
+    plt.scatter(polar_BxF_1[:, 1], polar_BxF_1[:, 2], s=0.1, label='polar_BxF_1')
+
+    plt.legend()
+    plt.show(block=True)
+
+
+    # from pick last to first,                                              black to white
+    # cmap = plt.cm.get_cmap('bone')
+    # plt.scatter(data_BxF[nidxs[::-1], 0], data_BxF[nidxs[::-1], 1], marker='o', s=5, c=cmap(np.linspace(0, 1, len(nidxs) + 1))[:-1])
+
+    #
+    # tree = get_MBTree(data_BxF)
+    #
+    # fig, ax = plt.subplots(figsize=(10, 10))
+    #
+    #
+    # def draw(ax, tree, data_BxF):
+    #
+    #     cur_idx = tree['idx']
+    #
+    #     subs = tree['subs']
+    #     cur_point = data_BxF[cur_idx, :]
+    #
+    #     for sub in subs:
+    #         sub_idx = sub['idx']
+    #         sub_point = data_BxF[sub_idx, :]
+    #
+    #         plt.arrow(cur_point[0], cur_point[1], sub_point[0] - cur_point[0], sub_point[1] - cur_point[1], color='white')
+    #         # ax.plot([cur_point[0], sub_point[0]], [cur_point[1], sub_point[1]], marker='o', color='white')
+    #
+    #         print(f'{cur_idx}->{sub_idx}')
+    #         draw(ax, sub, data_BxF)
+    #     ax.annotate(f"{tree['d']}",
+    #                 xy=(cur_point[0], cur_point[1]), xycoords='data',
+    #                 xytext=(0, 0), textcoords='offset points',
+    #                 horizontalalignment='right', verticalalignment='bottom')
+    #
+    #
+    # draw(ax, tree, data_BxF)
+    # plt.show(block=True)
+
+    #
+    # chain2idxs = {0: list(range(len(data_BxF)))}
+    # build_tree(data_BxF, chain2idxs)
+    # print(f"draw graph")
+    #
+    # chain2idxs = chain2idxs[0]
+    # for c0, c1_chain2idxs in chain2idxs.items():
+    #     if isinstance(c1_chain2idxs, list):
+    #         plt.scatter(data_BxF[c1_chain2idxs, 0], data_BxF[c1_chain2idxs, 1], s=0.5, label=f"cluster={c0}")
+    #     elif isinstance(c1_chain2idxs, dict):
+    #         for c1, c2_chain2idxs in c1_chain2idxs.items():
+    #             idxs = get_list(c2_chain2idxs)
+    #             plt.scatter(data_BxF[idxs, 0], data_BxF[idxs, 1], s=0.5, label=f"cluster={c0}x{c1}")
+    # plt.legend()
+    # plt.show(block=True)
+
+
+def get_method_B_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
+    B, F = data_BxF.shape
+    N = len(idxs)
+    if len(idxs) <= 2:
+        return idxs, N, {}
+    else:
+        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+        # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
+
+        similarity_B = np.sum((data_BxF[idxs, :] * mean_data_F), axis=1)
+        mean_local_idx_max = np.argmax(similarity_B)
+        mean_local_idx_min = np.argmin(similarity_B)
+
+        # mean_idxs = [idxs[mean_local_idx_max], idxs[mean_local_idx_min]]
+
+        mean_idxs = [mean_local_idx_max, mean_local_idx_min]
+        # print(mean_idxs)
+        similar_to_mean_max_B = np.sum(data_BxF[idxs, :] * data_BxF[mean_local_idx_max, :], axis=1)
+        similar_to_mean_min_B = np.sum(data_BxF[idxs, :] * data_BxF[mean_local_idx_min, :], axis=1)
+
+        cross_B = (similar_to_mean_max_B < similar_to_mean_min_B).astype(int)
+        cross_B[mean_idxs] = -1
+
+        # print(cross_B)
+
+        ck2idxs = {0: [], 1: []}
+        for i, ck in enumerate(cross_B):
+            if ck >= 0:
+                if not ck in ck2idxs:
+                    ck2idxs[ck] = []
+                ck2idxs[ck].append(idxs[i])
+
+        return [idxs[i] for i in mean_idxs], N, ck2idxs
+
+
+def get_method_C_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
+    B, F = data_BxF.shape
+    N = len(idxs)
+    if len(idxs) <= 2:
+        return idxs, N, {}
+    else:
+        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+        # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
+
+        similarity_B = np.sum((data_BxF[idxs, :] * mean_data_F), axis=1)
+        mean_local_idx_max = np.argmax(similarity_B)
+        mean_local_idx_min = np.argmin(similarity_B)
+
+        # mean_idxs = [idxs[mean_local_idx_max], idxs[mean_local_idx_min]]
+
+        mean_idxs = [mean_local_idx_max, mean_local_idx_min]
+        # print(mean_idxs)
+        similar_to_mean_max_B = np.sum(data_BxF[idxs, :] * data_BxF[mean_local_idx_max, :], axis=1)
+        # similar_to_mean_min_B = np.sum(data_BxF[idxs, :] * data_BxF[mean_local_idx_min, :], axis=1)
+
+        cross_B = (similar_to_mean_max_B > 0).astype(int)
+        cross_B[mean_idxs] = -1
+
+        # print(cross_B)
+
+        ck2idxs = {0: [], 1: []}
+        for i, ck in enumerate(cross_B):
+            if ck >= 0:
+                if not ck in ck2idxs:
+                    ck2idxs[ck] = []
+                ck2idxs[ck].append(idxs[i])
+
+        return [idxs[i] for i in mean_idxs], N, ck2idxs
+
+
+def get_method_D_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
+    B, F = data_BxF.shape
+    N = len(idxs)
+    if len(idxs) <= 2:
+        return idxs, N, {}
+    else:
+        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+        # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
+
+        similarity_B = np.sum((data_BxF[idxs, :] * mean_data_F), axis=1)
+        mean_local_idx_max = np.argmax(similarity_B)
+        mean_local_idx_min = np.argmin(similarity_B)
+
+        # mean_idxs = [idxs[mean_local_idx_max], idxs[mean_local_idx_min]]
+
+        mean_idxs = [mean_local_idx_max, mean_local_idx_min]
+        # print(mean_idxs)
+        similarity_B_N = np.sum((data_BxF[idxs, :] * -mean_data_F), axis=1)
+
+        cross_B = (similarity_B_N > similarity_B).astype(int)
+        cross_B[mean_idxs] = -1
+
+        # print(cross_B)
+
+        ck2idxs = {0: [], 1: []}
+        for i, ck in enumerate(cross_B):
+            if ck >= 0:
+                if not ck in ck2idxs:
+                    ck2idxs[ck] = []
+                ck2idxs[ck].append(idxs[i])
+
+        return [idxs[i] for i in mean_idxs], N, ck2idxs
+
+
+def get_method_E_MBTree_idxs_N_ck2idxs(data_BxF):
+    B, F = data_BxF.shape
+
+    max_pos_B = np.argmax(np.abs(data_BxF), axis=1)
+    max_pos_sign_B = np.sign(data_BxF[np.arange(B), max_pos_B])
+
+    cks = ((max_pos_sign_B + 1) // 2 + 2 * max_pos_B).astype(int)
+
+    ck2idxs = {}
+    pick_idxs = []
+    for idx, ck in enumerate(cks):
+        if not ck in ck2idxs:
+            ck2idxs[ck] = []
+        ck2idxs[ck].append(idx)
+
+    ck2vct_F = {}
+    for ck in ck2idxs:
+        vct_F = np.zeros(F)
+        sign = int((ck % 2 * 2) - 1)
+        pos = ck // 2
+        vct_F[pos] = sign
+        ck2vct_F[ck] = vct_F
+
+    p(ck2vct_F)
+
+    for ck, idxs in ck2idxs.items():
+        similarity_B = np.sum((data_BxF[idxs, :] * ck2vct_F[ck]), axis=1)
+        local_pick_idx = np.argmax(similarity_B)
+        pick_idx = idxs[local_pick_idx]
+        pick_idxs.append(pick_idx)
+        new_idxs = idxs[:local_pick_idx] + idxs[local_pick_idx + 1:]
+        ck2idxs[ck] = new_idxs
+        print(f"{ck}:{pick_idx},{new_idxs}")
+
+else:
+    if sub_reorder:
+        idxs = reorder_by_MBTree(data_BxF, get_method_MBTree_idxs_N_ck2idxs, idxs, sub_reorder=sub_reorder)
+        # random.shuffle(idxs)
+        new_idxs.extend(idxs)
+else:
+    random.shuffle(idxs)
+    new_idxs.extend(idxs)
+
+
+
+def reorder_method_BT(data_BxF):
+    return reorder_by_MBTree(data_BxF, get_method_B_MBTree_idxs_N_ck2idxs, idxs=None, sub_reorder=False)
+
+
+def reorder_method_BF(data_BxF):
+    return reorder_by_MBTree(data_BxF, get_method_B_MBTree_idxs_N_ck2idxs, idxs=None, sub_reorder=False)
+
+
+def reorder_method_CT(data_BxF):
+    return reorder_by_MBTree(data_BxF, get_method_C_MBTree_idxs_N_ck2idxs, idxs=None, sub_reorder=False)
+
+
+def reorder_method_CF(data_BxF):
+    return reorder_by_MBTree(data_BxF, get_method_C_MBTree_idxs_N_ck2idxs, idxs=None, sub_reorder=False)
+
+
+def reorder_method_DT(data_BxF):
+    return reorder_by_MBTree(data_BxF, get_method_D_MBTree_idxs_N_ck2idxs, idxs=None, sub_reorder=False)
+
+
+def reorder_method_DF(data_BxF):
+    return reorder_by_MBTree(data_BxF, get_method_D_MBTree_idxs_N_ck2idxs, idxs=None, sub_reorder=False)
+
+def find_nearest(array, value):
+    idx = np.searchsorted(array, value, side="left")
+
+    if idx > 0 and (idx == len(array) or math.fabs(value - array[idx - 1]) < math.fabs(value - array[idx])):
+        return idx - 1
+    else:
+        return np.max(idx, 0)
+
+
+def make_binary_tree(idxs, vals, level=0, left_val=None, right_val=None):
+    if len(idxs) == 0:
+        return None
+    elif len(idxs) == 1:
+        return {'idx': idxs[0], 'left': None, 'right': None, 'lv': level}
+
+    if left_val is None:
+        left_val = vals[0]
+    if right_val is None:
+        right_val = vals[-1]
+    mid_val = (left_val + right_val) / 2
+
+    local_idx = find_nearest(vals, mid_val)
+
+    global_idx = idxs[local_idx]
+
+    left_idxs = idxs[:local_idx]
+    right_idxs = idxs[local_idx + 1:]
+
+    left_tree = make_binary_tree(left_idxs, vals[:local_idx], level=level + 1, left_val=left_val, right_val=mid_val)
+    right_tree = make_binary_tree(right_idxs, vals[local_idx + 1:], level=level + 1, left_val=mid_val, right_val=right_val)
+
+    return {'idx': global_idx, 'left': left_tree, 'right': right_tree, 'lv': level}
+
+
+
+def reorder_method_quick_explore(data_BxF: np.ndarray):
+    data_BxK = scipy.linalg.orth(data_BxF)
+
+    v_B = np.sum(data_BxK ** 3, axis=1)
+
+    idxs = np.argsort(v_B)
+    v_B = v_B[idxs]
+
+    tree = make_binary_tree(idxs, v_B)
+    # p(tree)
+    level2idxs = {}
+    q = Queue()
+    q.put(tree)
+    while not q.empty():
+        t = q.get()
+        level = t['lv']
+
+        idx = t['idx']
+        if not level in level2idxs:
+            level2idxs[level] = []
+        level2idxs[level].append(idx)
+
+        left_tree = t['left']
+        right_tree = t['right']
+        for sub_tree in [left_tree, right_tree]:
+            if sub_tree:
+                q.put(sub_tree)
+
+    # p(level2idxs)
+
+    new_idxs = []
+    for level in sorted(list(level2idxs.keys())):
+        idxs = level2idxs[level]
+        random.shuffle(idxs)
+        new_idxs.extend(idxs)
+
+    if not len(new_idxs) == len(idxs):
+        hold = set()
+        new_idxs_buffer = []
+        for nidx in new_idxs:
+            if not nidx in hold:
+                hold.add(nidx)
+                new_idxs_buffer.append(nidx)
+        new_idxs = new_idxs_buffer
+    return new_idxs
+
+
+def get_method_O1_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
+    N = len(idxs)
+    if len(idxs) == 1:
+        mean_idx = idxs[0]
+        return [mean_idx], N, {}
+    else:
+        data_BxK = scipy.linalg.orth(data_BxF[idxs, :])
+        B, K = data_BxK.shape
+        po = 2 ** np.arange(K)
+
+        mean_data_F = (np.max(data_BxK, axis=0) + np.min(data_BxK, axis=0)) / 2
+
+        # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        mean_local_idx = np.argmax(np.sum((data_BxK * mean_data_F), axis=1))
+
+        mean_idx = idxs[mean_local_idx]
+        wash_idxs = idxs[:mean_local_idx] + idxs[mean_local_idx + 1:]
+
+        ck2idxs = {}
+        if len(wash_idxs) > 0:
+            chain_sub_keys = np.array(data_BxK < mean_data_F, dtype=bool) @ po
+            for ck, idx in zip(chain_sub_keys, wash_idxs):
+                if not ck in ck2idxs:
+                    ck2idxs[ck] = []
+                ck2idxs[ck].append(idx)
+
+        return [mean_idx], N, ck2idxs
+
+
+def get_method_O2_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
+    N = len(idxs)
+    if len(idxs) == 1:
+        mean_idx = idxs[0]
+        return [mean_idx], N, {}
+    else:
+        data_BxK = scipy.linalg.orth(data_BxF[idxs, :])
+        B, K = data_BxK.shape
+        po = 2 ** np.arange(K)
+
+        mean_data_F = (np.max(data_BxK, axis=0) + np.min(data_BxK, axis=0)) / 2
+
+        mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        # mean_local_idx = np.argmax(np.sum((data_BxK * mean_data_F), axis=1))
+
+        mean_idx = idxs[mean_local_idx]
+        wash_idxs = idxs[:mean_local_idx] + idxs[mean_local_idx + 1:]
+
+        ck2idxs = {}
+        if len(wash_idxs) > 0:
+            chain_sub_keys = np.array(data_BxK < mean_data_F, dtype=bool) @ po
+            for ck, idx in zip(chain_sub_keys, wash_idxs):
+                if not ck in ck2idxs:
+                    ck2idxs[ck] = []
+                ck2idxs[ck].append(idx)
+       return [mean_idx], N, ck2idxs
+
+
+
+def get_method_A2_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
+    B, F = data_BxF.shape
+    N = len(idxs)
+    po = 2 ** np.arange(F)
+    if len(idxs) == 1:
+        mean_idx = idxs[0]
+        return [mean_idx], N, {}
+    else:
+        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
+
+        mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        # mean_local_idx = np.argmax(np.sum((data_BxF[idxs, :] * mean_data_F), axis=1))
+
+        mean_idx = idxs[mean_local_idx]
+        wash_idxs = idxs[:mean_local_idx] + idxs[mean_local_idx + 1:]
+
+        ck2idxs = {}
+        if len(wash_idxs) > 0:
+            chain_sub_keys = np.array(data_BxF[wash_idxs, :] < mean_data_F, dtype=bool) @ po
+            for ck, idx in zip(chain_sub_keys, wash_idxs):
+                if not ck in ck2idxs:
+                    ck2idxs[ck] = []
+                ck2idxs[ck].append(idx)
+
+        return [mean_idx], N, ck2idxs
+
+
+def get_method_O1_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
+    N = len(idxs)
+    if len(idxs) == 1:
+        mean_idx = idxs[0]
+        return [mean_idx], N, {}
+    else:
+        B, K = data_BxF.shape
+        po = 2 ** np.arange(K)
+
+        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
+
+        # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        mean_local_idx = np.argmax(np.sum((data_BxF[idxs, :] * mean_data_F), axis=1))
+
+        mean_idx = idxs[mean_local_idx]
+        wash_idxs = idxs[:mean_local_idx] + idxs[mean_local_idx + 1:]
+
+        ck2idxs = {}
+        if len(wash_idxs) > 0:
+            chain_sub_keys = np.array(data_BxF[wash_idxs, :] < mean_data_F, dtype=bool) @ po
+            for ck, idx in zip(chain_sub_keys, wash_idxs):
+                if not ck in ck2idxs:
+                    ck2idxs[ck] = []
+                ck2idxs[ck].append(idx)
+
+        return [mean_idx], N, ck2idxs
+
+def reorder_method_EV(data_BxF):
+    B, F = data_BxF.shape
+
+    key = (reorder_method_EV.__name__, B, F)
+    if key in cache_algo_shape_2_res:
+        res = cache_algo_shape_2_res[key]
+    else:
+        res = reorder_by_MBTree(data_BxF, get_method_EUC_VIRT_MBTree_idxs_N_ck2idxs, idxs=None)
+        cache_algo_shape_2_res[key] = res
+    return res
+
+
+
+def get_method_K1_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
+    B, F = data_BxF.shape
+    N = len(idxs)
+    n_clusters = F
+    if len(idxs) == 1:
+        mean_idx = idxs[0]
+        return [mean_idx], N, {}
+    else:
+        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+
+        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
+
+        # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        mean_local_idx = np.argmax(np.sum((data_BxF[idxs, :] * mean_data_F), axis=1))
+
+        mean_idx = idxs[mean_local_idx]
+        wash_idxs = idxs[:mean_local_idx] + idxs[mean_local_idx + 1:]
+
+        ck2idxs = {}
+        if len(wash_idxs) == 0:
+            pass
+        else:
+            if len(wash_idxs) == 1:
+                ck2idxs[0] = wash_idxs
+            else:
+                while len(wash_idxs) < n_clusters:
+                    n_clusters = max(1, n_clusters // 2)
+
+                bisect_means = BisectingKMeans(n_clusters=n_clusters, copy_x=False).fit(data_BxF[wash_idxs, :])
+                chain_sub_keys = bisect_means.labels_
+                for ck, idx in zip(chain_sub_keys, wash_idxs):
+                    if not ck in ck2idxs:
+                        ck2idxs[ck] = []
+                    ck2idxs[ck].append(idx)
+
+        return [mean_idx], N, ck2idxs
+
+
+def get_method_K2_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
+    B, F = data_BxF.shape
+    N = len(idxs)
+    n_clusters = F
+    if len(idxs) == 1:
+        mean_idx = idxs[0]
+        return [mean_idx], N, {}
+    else:
+        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+
+        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
+
+        # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        mean_local_idx = np.argmax(np.sum((data_BxF[idxs, :] * mean_data_F), axis=1))
+
+        mean_idx = idxs[mean_local_idx]
+        wash_idxs = idxs[:mean_local_idx] + idxs[mean_local_idx + 1:]
+
+        ck2idxs = {}
+        if len(wash_idxs) == 0:
+            pass
+        else:
+            if len(wash_idxs) == 1:
+                ck2idxs[0] = wash_idxs
+            else:
+                while len(wash_idxs) < n_clusters:
+                    n_clusters = max(1, n_clusters // 2)
+
+                bisect_means = BisectingKMeans(n_clusters=n_clusters, copy_x=False, bisecting_strategy='largest_cluster').fit(data_BxF[wash_idxs, :])
+                chain_sub_keys = bisect_means.labels_
+                for ck, idx in zip(chain_sub_keys, wash_idxs):
+                    if not ck in ck2idxs:
+                        ck2idxs[ck] = []
+                    ck2idxs[ck].append(idx)
+
+        return [mean_idx], N, ck2idxs
+
+
+def get_method_K3_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
+    B, F = data_BxF.shape
+    N = len(idxs)
+    n_clusters = F
+    if len(idxs) == 1:
+        mean_idx = idxs[0]
+        return [mean_idx], N, {}
+    else:
+        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+
+        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
+
+        # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        mean_local_idx = np.argmax(np.sum((data_BxF[idxs, :] * mean_data_F), axis=1))
+
+        mean_idx = idxs[mean_local_idx]
+        wash_idxs = idxs[:mean_local_idx] + idxs[mean_local_idx + 1:]
+
+        ck2idxs = {}
+        if len(wash_idxs) == 0:
+            pass
+        else:
+            if len(wash_idxs) == 1:
+                ck2idxs[0] = wash_idxs
+            else:
+                while len(wash_idxs) < n_clusters:
+                    n_clusters = max(1, n_clusters // 2)
+
+                bisect_means = BisectingKMeans(n_clusters=n_clusters, copy_x=False, algorithm='elkan').fit(data_BxF[wash_idxs, :])
+                chain_sub_keys = bisect_means.labels_
+                for ck, idx in zip(chain_sub_keys, wash_idxs):
+                    if not ck in ck2idxs:
+                        ck2idxs[ck] = []
+                    ck2idxs[ck].append(idx)
+
+        return [mean_idx], N, ck2idxs
+
+
+def get_method_K4_MBTree_idxs_N_ck2idxs(data_BxF, idxs):
+    B, F = data_BxF.shape
+    N = len(idxs)
+    n_clusters = F
+    if len(idxs) == 1:
+        mean_idx = idxs[0]
+        return [mean_idx], N, {}
+    else:
+        # mean_data_F = np.mean(data_BxF[idxs, :], axis=0)
+
+        mean_data_F = (np.max(data_BxF[idxs, :], axis=0) + np.min(data_BxF[idxs, :], axis=0)) / 2
+
+        # mean_local_idx = np.argmin(np.sum((data_BxF[idxs, :] - mean_data_F) ** 2, axis=1))
+        mean_local_idx = np.argmax(np.sum((data_BxF[idxs, :] * mean_data_F), axis=1))
+
+        mean_idx = idxs[mean_local_idx]
+        wash_idxs = idxs[:mean_local_idx] + idxs[mean_local_idx + 1:]
+        ck2idxs = {}
+        if len(wash_idxs) == 0:
+            pass
+        else:
+            if len(wash_idxs) == 1:
+                ck2idxs[0] = wash_idxs
+            else:
+                while len(wash_idxs) < n_clusters:
+                    n_clusters = max(1, n_clusters // 2)
+
+                bisect_means = BisectingKMeans(n_clusters=n_clusters, copy_x=False, algorithm='elkan', bisecting_strategy='largest_cluster').fit(data_BxF[wash_idxs, :])
+                chain_sub_keys = bisect_means.labels_
+                for ck, idx in zip(chain_sub_keys, wash_idxs):
+                    if not ck in ck2idxs:
+                        ck2idxs[ck] = []
+                    ck2idxs[ck].append(idx)
+
+        return [mean_idx], N, ck2idxs
+
+ other = lambda x: [v for v in list(range(len(labels))) if v != x]
+
+    res_dctns = []
+
+    for idx, label in enumerate(labels):
+        TP = sum(mtx[[idx], [idx]])
+        FN = sum(mtx[[idx], other(idx)])
+        FP = sum(mtx[other(idx), [idx]])
+        TN = sum(mtx[other(idx), other(idx)])
+
+        dctn = {}
+
+        dctn[col_precision] = TP / (TP + FP) if TP > 0 else 0
+        dctn[col_recall] = TP / (TP + FN) if TP > 0 else 0
+        dctn[col_accuracy] = (TP + TN) / (TP + TN + FP + FN) if (TP + TN) > 0 else 0
+
+        dctn[col_f1] = 2 * dctn[col_precision] * dctn[col_recall] / (dctn[col_precision] + dctn[col_recall]) if dctn[col_precision] * dctn[col_recall] > 0 else 0
+        res_dctns.append(dctn)
+
+    ave_dctn = {}
+    ave_dctn[col_precision] = sum([dctn[col_precision] for dctn in res_dctns]) / len(res_dctns)
+    ave_dctn[col_recall] = sum([dctn[col_recall] for dctn in res_dctns]) / len(res_dctns)
+    ave_dctn[col_accuracy] = sum([dctn[col_accuracy] for dctn in res_dctns]) / len(res_dctns)
+    ave_dctn[col_f1] = sum([dctn[col_f1] for dctn in res_dctns]) / len(res_dctns)
+
+    res_dctns.append(ave_dctn)
+
+    # total_dctn = {}
+    # all_idxs = list(range(len(labels)))
+    # correct_count = sum(mtx[all_idxs, all_idxs])
+    # ave_dctn[col_precision] = -1
+    # total_dctn[col_recall] = -1
+    # print(df_mtx)
+    # print(correct_count)
+    # print(len(labels_real))
+
+    # total_dctn[col_accuracy] = correct_count / len(labels_real) if correct_count > 0 else 0
+    # total_dctn[col_f1] = -1
+    # res_dctns.append(total_dctn)

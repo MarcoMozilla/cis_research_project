@@ -457,16 +457,11 @@ def reorder_method_RAND(data_BxF):
 
 methods = [
     reorder_method_RAND
-    , reorder_method_CV
-    , reorder_method_EV
-    , reorder_method_CV_EV
     , reorder_method_CVMean
     , reorder_method_EVMean
     , reorder_method_CVMedian
     , reorder_method_EVMedian
-    , reorder_method_CV_RAND
     , reorder_method_CV_EV_RAND
-
 ]
 
 np.random.seed(const.seed)

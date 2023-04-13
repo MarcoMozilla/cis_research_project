@@ -25,7 +25,7 @@ ptrain_ptest = [
 
 cost_dctns = []
 pcents = [
-    25, 50, 70
+    15, 25, 50, 70
     , 100, 200, 300, 500, 700
     , 1000, 2000, 3000, 5000
     , 10000, 16000, 20000, 25000, 30000, 50000
@@ -50,9 +50,6 @@ for pcent in pcents:
             y_test = dm.get_y_test()
             spname2spidxs = {
                 'RAND': dm.get_rids_sample('reorder_method_RAND')
-                , 'CV': dm.get_rids_sample('reorder_method_CV')
-                , 'EV': dm.get_rids_sample('reorder_method_EV')
-                , 'CV_EV': dm.get_rids_sample('reorder_method_CV_EV')
                 , 'CV_RAND': dm.get_rids_sample('reorder_method_CV_RAND')
                 , 'CV_EV_RAND': dm.get_rids_sample('reorder_method_CV_EV_RAND')
                 , 'CVMean': dm.get_rids_sample('reorder_method_CVMean')

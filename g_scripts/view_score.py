@@ -65,16 +65,18 @@ for fname in fnames[:]:
     dctn_score[col_precision] = df_score['precision']['macro avg']
     dctn_score[col_recall] = df_score['recall']['macro avg']
 
+    pcent = int(pcent)
     for col in [col_f1, col_accuracy, col_precision, col_recall]:
         dctn = {'dataset_name': dataset_name,
                 'tp': tp,
                 'algo_name': algo_name,
-                'pcent': int(pcent),
+                'pcent': pcent,
                 'col': col,
                 'nn': nnsent,
                 'value': dctn_score[col]
                 }
-        dctns.append(dctn)
+        if pcent < 100000:
+            dctns.append(dctn)
 
 dctns.sort(key=lambda dctn: dctn['pcent'])
 rdf = pd.DataFrame(dctns)
@@ -88,16 +90,16 @@ dataset_names = ['amazonpolar', 'dbpedia', 'yelp', 'agnews', 'imdb', 'emotion'][
 # dataset_names = ['emotion', 'yelp']
 
 
-markers = ['.', 'x', 'x', 'x', 'x', 'x', 'x']
 algo_names = [
     'RAND'
-    , 'CV'
-    , 'EV'
-    , 'CV_EV'
-    , 'CV_RAND'
-    , 'CR_CV_RAND'
+    , 'CVMean'
+    , 'CVMedian'
+    , 'EVMedian'
+    , 'EVMean'
     , 'CV_EV_RAND'
 ]
+
+markers = ['.'] + ['x'] * (len(algo_names) - 1)
 
 colors = plt.get_cmap('brg')(np.linspace(0, 1, len(algo_names) * 2 + 2))[1:-1:2]
 
@@ -111,7 +113,7 @@ for aidx, col in enumerate(cols):
                 for tp in ['train', 'test']:
                     label = f'{dataset_name}-{nn}-{algo_name}-{tp}'
 
-                    sub_rdf = rdf[(rdf['pcent'] < 16000) & (rdf['dataset_name'] == dataset_name) & (rdf['nn'] == nn) & (rdf['algo_name'] == algo_name) & (rdf['col'] == col) & (rdf['tp'] == tp)]
+                    sub_rdf = rdf[(rdf['dataset_name'] == dataset_name) & (rdf['nn'] == nn) & (rdf['algo_name'] == algo_name) & (rdf['col'] == col) & (rdf['tp'] == tp)]
                     if len(sub_rdf) > 0:
                         values = sub_rdf['value'].tolist()[:]
                         pcents = sub_rdf['pcent'].tolist()[:]

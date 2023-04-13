@@ -27,7 +27,7 @@ fname2X = {}
 for fname in tqdm(fnames):
     name, tp, shape, varname, suffix = fname.split('.')
 
-    if tp in {'train'}:
+    if tp in {'train', 'test'}:
 
         if not fname in fname2X:
             fpath = os.path.join(path_buffer, fname)
@@ -88,7 +88,7 @@ ratio_cross_feature = 1
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA, KernelPCA
 
-fname_pick = 'emotion.train.16000x6.X.npy'
+fname_pick = 'imdb.test.25000x2.X.npy'
 
 X = fname2X[fname_pick]
 
@@ -112,7 +112,7 @@ name2model = {
 
 }
 
-dm = DataManager(path_data_jsonl_train=r'emotion.train.16000x6.jsonl', path_data_jsonl_test=r'emotion.test.2000x6.jsonl')
+dm = DataManager(path_data_jsonl_train=r'imdb.test.25000x2.jsonl', path_data_jsonl_test=r'imdb.test.25000x2.jsonl')
 
 for model_name, model_reduce_dim in tqdm(name2model.items()):
     fig3 = plt.figure(figsize=(24, 24))

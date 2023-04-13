@@ -33,8 +33,8 @@ def get_confuseMatrix_and_scoreTable(labels_real, labels_pred, labels=None, path
     mtx = confusion_matrix(labels_real, labels_pred, labels=labels)
     df_mtx = pd.DataFrame(mtx, index=labels, columns=labels)
 
-    labels = sorted(list(set(labels_real) | set(labels_pred)))
-    report_score = classification_report(labels_real, labels_pred, target_names=labels, digits=4, output_dict=True, zero_division=0)
+    labels = sorted(list(set(labels_real) | set(labels_pred)), key=lambda lb: labels.index(lb))
+    report_score = classification_report([labels.index(lb) for lb in labels_real], [labels.index(lb) for lb in labels_pred], target_names=labels, digits=4, output_dict=True, zero_division=0)
     df_score = pd.DataFrame(report_score).transpose()
     # print(df_score)
 
@@ -126,11 +126,11 @@ class ModelManager:
 
             loss_fctn = nn.CrossEntropyLoss(weight=weights_Tensor)
 
+        prev_train_f1 = 0
+        forgive = 12
+        f1_early_stop = 0.995
         optimizer = torch.optim.NAdam(self.model.parameters(), lr=lr)
 
-        prev_train_f1 = 0
-        forgive = 10
-        f1_early_stop = 0.995
         w = Watch()
 
         self.model.train(True)
@@ -164,6 +164,7 @@ class ModelManager:
                 if tdctn_train[col_f1] <= prev_train_f1:
                     forgive -= 1
                     lr = lr * 0.5
+                    optimizer = torch.optim.NAdam(self.model.parameters(), lr=lr)
                     print(f'lr = {lr}')
                     if forgive == 0:
                         bk = True
